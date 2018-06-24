@@ -40,6 +40,10 @@
 
 ## SpringBoneTool 是彈性骨骼
 
+直接看影片吧
+
+[![SpringBoneTool](http://img.youtube.com/vi/Up4L2wYsorI/0.jpg)](https://www.youtube.com/watch?v=Up4L2wYsorI "SpringBoneTool")
+
 ![Alt text](/imgs/img2.png)
 
 ## VoxelTool 是體素效果
