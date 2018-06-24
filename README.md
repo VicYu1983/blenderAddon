@@ -2,6 +2,8 @@
 
 ![Alt text](/imgs/img1.png)
 
+![Alt text](/imgs/img2.png)
+
 ## Action 是一些流程的快速鍵
 
 ### Create Mirror Cube 
@@ -16,10 +18,44 @@
 
 可以建立剛體物理的粒子效果
 
+以下是介紹影片
+
+[![Particle To Rigidbodys](http://img.youtube.com/vi/G61hp533SEk/0.jpg)](https://www.youtube.com/watch?v=G61hp533SEk "Particle To Rigidbodys")
+
+### Select By Name
+
+快速選取有同樣名稱的物件
+
+### Drag Effect
+
+把mesh有伸縮的能力，以下是介紹影片
+
+[![Drag Effect](http://img.youtube.com/vi/5haIDFWUm-Y/0.jpg)](https://www.youtube.com/watch?v=5haIDFWUm-Y "Drag Effect")
+
+#### Make It Drag
+
+把mesh有伸縮的能力
+
+#### Healing All
+
+把DRAG的效果清空
+
 ## SpringBoneTool 是彈性骨骼
 
-![Alt text](/imgs/img2.png)
+直接看影片吧
+
+[![SpringBoneTool](http://img.youtube.com/vi/Up4L2wYsorI/0.jpg)](https://www.youtube.com/watch?v=Up4L2wYsorI "SpringBoneTool")
 
 ## VoxelTool 是體素效果
 
+把模型包含頂點顏色轉成體素效果，以下是介紹影片
+
+[![VoxelTool](http://img.youtube.com/vi/VU7X1fNcg7M/0.jpg)](https://www.youtube.com/watch?v=VU7X1fNcg7M "VoxelTool")
+
 ## ObjectAroundObject 是有趣的動態效果
+
+以下是介紹影片
+
+[![ObjectAroundObject](http://img.youtube.com/vi/F9LaiSzq4Sg/0.jpg)](https://www.youtube.com/watch?v=F9LaiSzq4Sg "ObjectAroundObject")
+
+
