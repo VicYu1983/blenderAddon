@@ -40,6 +40,28 @@
 
 把DRAG的效果清空
 
+### BGE
+
+blender game engine 用的功能
+
+#### Make It Emitter
+
+bge用的pure particle system 的粒子發射器
+
+[![pure particle system](http://img.youtube.com/vi/UIB5_1OyqcY/0.jpg)](https://www.youtube.com/watch?v=UIB5_1OyqcY "pure particle system")
+
+#### Make It Sprite
+
+bge用的pure particle system 的粒子
+
+#### Make It Drag
+
+把mesh有伸縮的能力，bge版
+
+#### Quick Character
+
+快速把物件填加wasd操作節點
+
 ## SpringBoneTool 是彈性骨骼
 
 直接看影片吧
