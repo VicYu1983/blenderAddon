@@ -2,6 +2,8 @@
 
 ![Alt text](/imgs/img1.png)
 
+![Alt text](/imgs/img2.png)
+
 ## Action 是一些流程的快速鍵
 
 ### Create Mirror Cube 
@@ -43,8 +45,6 @@
 直接看影片吧
 
 [![SpringBoneTool](http://img.youtube.com/vi/Up4L2wYsorI/0.jpg)](https://www.youtube.com/watch?v=Up4L2wYsorI "SpringBoneTool")
-
-![Alt text](/imgs/img2.png)
 
 ## VoxelTool 是體素效果
 
