@@ -50,6 +50,8 @@ bge用的pure particle system 的粒子發射器
 
 [![pure particle system](http://img.youtube.com/vi/UIB5_1OyqcY/0.jpg)](https://www.youtube.com/watch?v=UIB5_1OyqcY "pure particle system")
 
+[![pure particle system](http://img.youtube.com/vi/bcfBA7S42d4/0.jpg)](https://www.youtube.com/watch?v=bcfBA7S42d4 "pure particle system")
+
 #### Make It Sprite
 
 bge用的pure particle system 的粒子
