@@ -32,7 +32,11 @@
 
 #### Make It Drag
 
+把mesh有伸縮的能力
+
 #### Healing All
+
+把DRAG的效果清空
 
 ## SpringBoneTool 是彈性骨骼
 
@@ -40,4 +44,14 @@
 
 ## VoxelTool 是體素效果
 
+把模型包含頂點顏色轉成體素效果，以下是介紹影片
+
+[![VoxelTool](http://img.youtube.com/vi/VU7X1fNcg7M/0.jpg)](https://www.youtube.com/watch?v=VU7X1fNcg7M "VoxelTool")
+
 ## ObjectAroundObject 是有趣的動態效果
+
+以下是介紹影片
+
+[![ObjectAroundObject](http://img.youtube.com/vi/F9LaiSzq4Sg/0.jpg)](https://www.youtube.com/watch?v=F9LaiSzq4Sg "ObjectAroundObject")
+
+
