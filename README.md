@@ -52,6 +52,8 @@ bge用的pure particle system 的粒子發射器
 
 [![pure particle system](http://img.youtube.com/vi/bcfBA7S42d4/0.jpg)](https://www.youtube.com/watch?v=bcfBA7S42d4 "pure particle system")
 
+[![pure particle system](http://img.youtube.com/vi/4-qa2oTSPC8/0.jpg)](https://www.youtube.com/watch?v=4-qa2oTSPC8 "pure particle system")
+
 #### Make It Sprite
 
 bge用的pure particle system 的粒子
@@ -59,6 +61,8 @@ bge用的pure particle system 的粒子
 #### Make It Drag
 
 把mesh有伸縮的能力，bge版
+
+[![pure particle system](http://img.youtube.com/vi/XEqQVRYO_i4/0.jpg)](https://www.youtube.com/watch?v=XEqQVRYO_i4 "pure particle system")
 
 #### Quick Character
 
