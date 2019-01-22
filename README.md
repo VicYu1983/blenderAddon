@@ -10,9 +10,11 @@
 
 ![Alt text](/imgs/img3.png)
 
-到安裝的blender addon資料夾下（你的blender目錄\2.80\scripts\addons），再blender中啓用
+到安裝的blender addon資料夾下（你的blender目錄\2.80\scripts\addons），在blender中啓用
 
 ![Alt text](/imgs/img4.png)
+
+# VicTool功能介紹
 
 ![Alt text](/imgs/img1.png)
 
