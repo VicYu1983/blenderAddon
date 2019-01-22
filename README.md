@@ -1,10 +1,20 @@
 # VicTool
+
 ## 2.8 已經可以使用了，有些比較不成熟的功能先不實裝
+
 ## 2.79 的連接改到 https://1drv.ms/u/s!Apea4elXUnuxhJIhENBdzd0qdQY1PQ
+
 ## 安裝方法
 
+下載後解壓，如圖複製vicTool資料夾
+
 ![Alt text](/imgs/img3.png)
+
+到安裝的blender addon資料夾下（你的blender目錄\2.80\scripts\addons），在blender中啓用
+
 ![Alt text](/imgs/img4.png)
+
+# VicTool功能介紹
 
 ![Alt text](/imgs/img1.png)
 
