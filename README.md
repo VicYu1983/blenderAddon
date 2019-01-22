@@ -1,4 +1,6 @@
 # VicTool
+## 2.8 已經可以使用了，有些比較不成熟的功能先不實裝
+## 2.79 的連接改到 https://1drv.ms/u/s!Apea4elXUnuxhJIhENBdzd0qdQY1PQ
 
 ![Alt text](/imgs/img1.png)
 
@@ -14,7 +16,7 @@
 
 快速創建look at modifier並新增目標物件。方便快速的設定需要面向對像的物件。
 
-### Particle To Rigidbodys
+### Particle To Rigidbodys(2.79)
 
 可以建立剛體物理的粒子效果
 
@@ -26,25 +28,25 @@
 
 快速選取有同樣名稱的物件
 
-### Drag Effect
+### Drag Effect(2.79)
 
 把mesh有伸縮的能力，以下是介紹影片
 
 [![Drag Effect](http://img.youtube.com/vi/5haIDFWUm-Y/0.jpg)](https://www.youtube.com/watch?v=5haIDFWUm-Y "Drag Effect")
 
-#### Make It Drag
+#### Make It Drag(2.79)
 
 把mesh有伸縮的能力
 
-#### Healing All
+#### Healing All(2.79)
 
 把DRAG的效果清空
 
-### BGE
+### BGE(2.79)
 
 blender game engine 用的功能
 
-#### Make It Emitter
+#### Make It Emitter(2.79)
 
 bge用的pure particle system 的粒子發射器
 
@@ -54,17 +56,17 @@ bge用的pure particle system 的粒子發射器
 
 [![pure particle system](http://img.youtube.com/vi/4-qa2oTSPC8/0.jpg)](https://www.youtube.com/watch?v=4-qa2oTSPC8 "pure particle system")
 
-#### Make It Sprite
+#### Make It Sprite(2.79)
 
 bge用的pure particle system 的粒子
 
-#### Make It Drag
+#### Make It Drag(2.79)
 
 把mesh有伸縮的能力，bge版
 
 [![pure particle system](http://img.youtube.com/vi/XEqQVRYO_i4/0.jpg)](https://www.youtube.com/watch?v=XEqQVRYO_i4 "pure particle system")
 
-#### Quick Character
+#### Quick Character(2.79)
 
 快速把物件填加wasd操作節點
 
@@ -74,13 +76,13 @@ bge用的pure particle system 的粒子
 
 [![SpringBoneTool](http://img.youtube.com/vi/Up4L2wYsorI/0.jpg)](https://www.youtube.com/watch?v=Up4L2wYsorI "SpringBoneTool")
 
-## VoxelTool 是體素效果
+## VoxelTool 是體素效果(2.79)
 
 把模型包含頂點顏色轉成體素效果，以下是介紹影片
 
 [![VoxelTool](http://img.youtube.com/vi/VU7X1fNcg7M/0.jpg)](https://www.youtube.com/watch?v=VU7X1fNcg7M "VoxelTool")
 
-## ObjectAroundObject 是有趣的動態效果
+## ObjectAroundObject 是有趣的動態效果(2.79)
 
 以下是介紹影片
 
