@@ -6,7 +6,7 @@
 
 ## 安裝方法
 
-複製vicTool資料夾
+下載後解壓，如圖複製vicTool資料夾
 
 ![Alt text](/imgs/img3.png)
 
