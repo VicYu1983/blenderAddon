@@ -234,6 +234,54 @@ class mirror_cube_add(bpy.types.Operator):
             createMirrorCube()
         return {'FINISHED'}    
 
+from mathutils import geometry
+
+class vic_make_meshs_plane(bpy.types.Operator):
+    bl_idname = 'vic.make_meshs_plane'
+    bl_label = 'Make Meshs Plane'
+    
+    def doPlane(self, context):
+        mode = context.object.mode
+        
+        #for blender to update selected verts, faces
+        bpy.ops.object.mode_set(mode='OBJECT')
+        selectedFaces = [f for f in bpy.context.object.data.polygons if f.select]
+        selectedVerts = [v for v in bpy.context.object.data.vertices if v.select]
+        
+        if len( selectedFaces ) == 0:
+            self.report( {'ERROR'}, 'select one meshs at least.' )
+        else:
+            norms = Vector()
+            centers = Vector()
+            for f in selectedFaces:
+                norms += f.normal
+                centers += f.center
+                
+            count = len( selectedFaces ) 
+
+            norms_aver = norms / count
+            center_aver = centers / count
+            
+            try:
+                for v in selectedVerts:
+                    res = geometry.intersect_line_plane( v.co, v.co + norms_aver, center_aver, norms_aver )
+                    v.co = res
+            except:
+                self.report( {'ERROR'}, 'sorry for unknown error, please retry.' )
+            
+            bpy.ops.object.mode_set(mode=mode)
+            
+    def execute(self, context):
+        if context.view_layer.objects.active == None:
+            self.report( {'ERROR'}, 'please pick one object!' )
+            return {'FINISHED'}
+        else:
+            if context.object.mode != 'EDIT':
+                self.report( {'ERROR'}, 'should be in the edit mode!' )
+            else:
+                self.doPlane(context)
+            return {'FINISHED'}        
+
 class ActionProperties(bpy.types.PropertyGroup):
     string_select_name = bpy.props.StringProperty( name="", description="Name of select objects", default="")    
 
@@ -249,7 +297,7 @@ class VIC_ACTION_PANEL(bpy.types.Panel):
         col = layout.column(align=True)
         col.operator("vic.mirror_cube_add")
         col.operator("vic.vic_create_camera_target")
-        #col.operator("vic.make_meshs_plane")
+        col.operator("vic.make_meshs_plane")
         col.operator("vic.particle_rigidbody")
         
         row = col.row(align=True)
@@ -305,10 +353,10 @@ class ParticlesToRigidbodys(bpy.types.Operator):
             o.select_set( False )
             self.ms.append( o )
             
-    def moveMesh(self, forceEnd = False):
+    def moveMesh(self):
         for i, p in enumerate( self.ps.particles ):
             o = self.ms[i]
-            if forceEnd or (p.alive_state == 'DEAD'):
+            if p.alive_state == 'DEAD':
                 if o.rigid_body.kinematic:
                     o.rigid_body.kinematic=False
                     o.keyframe_insert('rigid_body.kinematic')
@@ -326,18 +374,13 @@ class ParticlesToRigidbodys(bpy.types.Operator):
         self.ms = []        
             
     def update( self, f ):
-        #print( f )
-        #print(self.end_frame)
         if f == self.start_frame:
-            print("create")
             self.clearSetting()
             self.createMesh()
         elif f == self.end_frame - 1:
-            print("end")
-            self.moveMesh(True)
+            self.moveMesh()
             self.clearSetting()
         else:
-            print("move")
             self.moveMesh()
         
     def executeAll(self):
@@ -346,13 +389,7 @@ class ParticlesToRigidbodys(bpy.types.Operator):
             bpy.context.scene.frame_set(f)
             self.update(f)
             print( 'frame solved:', f )
-        '''
-        for i in range( self.end_frame ):
-            f = i+1;
-            bpy.context.scene.frame_set(f)
-            self.update(f)
-            print( 'frame solved:', f )
-        '''    
+
     def execute(self, context):
         if context.view_layer.objects.active == None:
             self.report( {'ERROR'}, 'please pick one object!' )
@@ -379,7 +416,8 @@ classes = (
     mirror_cube_add,
     vic_hand_drag,
     vic_healing_all_effect_objects,
-    ParticlesToRigidbodys
+    ParticlesToRigidbodys,
+    vic_make_meshs_plane
 )
 def register():
     for cls in classes: bpy.utils.register_class(cls)
