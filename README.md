@@ -14,6 +14,10 @@
 
 ![Alt text](/imgs/img4.png)
 
+在視圖中按N鍵打開右側選單就可以看到
+
+![Alt text](/imgs/img5.png)
+
 # VicTool功能介紹
 
 ![Alt text](/imgs/img1.png)
