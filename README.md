@@ -34,7 +34,7 @@
 
 快速創建look at modifier並新增目標物件。方便快速的設定需要面向對像的物件。
 
-### Particle To Rigidbodys(2.79)
+### Particle To Rigidbodys
 
 可以建立剛體物理的粒子效果
 
