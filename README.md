@@ -46,17 +46,17 @@
 
 快速選取有同樣名稱的物件
 
-### Drag Effect(2.79)
+### Drag Effect
 
 把mesh有伸縮的能力，以下是介紹影片
 
 [![Drag Effect](http://img.youtube.com/vi/5haIDFWUm-Y/0.jpg)](https://www.youtube.com/watch?v=5haIDFWUm-Y "Drag Effect")
 
-#### Make It Drag(2.79)
+#### Make It Drag
 
 把mesh有伸縮的能力
 
-#### Healing All(2.79)
+#### Healing All
 
 把DRAG的效果清空
 
