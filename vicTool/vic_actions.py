@@ -19,7 +19,9 @@ def collectVertexColor( mesh, color_layer ):
 def avg_col(cols):
     avg_col = Color((0.0, 0.0, 0.0))
     for col in cols:
-        avg_col += col/len(cols)
+        avg_col[0] += col[0]/len(cols)
+        avg_col[1] += col[1]/len(cols)
+        avg_col[2] += col[2]/len(cols)
     return avg_col    
 
 def addProps( target, name, value, override = False ):
@@ -42,7 +44,7 @@ def save_vertex_position( target ):
     # 0.0~1.0 will be best!    
     addProps( target, 'vic_effective', 1.0 )
     # using vertex color
-    addProps( target, 'vic_using_vertex_color_map', False  )
+    addProps( target, 'vic_using_vertex_color_map', False )
     # using vertex color for effective value
     addProps( target, 'vic_effective_by_vertex_color', 'Col' )
     
@@ -74,7 +76,7 @@ def move_vertice( target ):
     proxy_pos = target.data['vic_proxy_vertex_position']
     force_pos = target.data['vic_force_for_each_vertex_by_vertex_color'] if target.data['vic_using_vertex_color_map'] else target.data['vic_force_for_each_vertex']
     effective = target.data['vic_effective']
-    
+
     for i, v in enumerate(vs,0):
         toPos = mat @ Vector( init_pos[i] )
         proxy_pos_vec = Vector(proxy_pos[i])
@@ -105,6 +107,7 @@ def addListener():
 class vic_hand_drag(bpy.types.Operator):
     bl_idname = 'vic.hand_drag'
     bl_label = 'Make It Drag'
+    bl_description = 'Every time you update vertex color, you should rebuild this effect! see custom properties in object data panel'
         
     def doEffect( self ):
         init_objects = filterCanEffect( bpy.context.selected_objects.copy() )
@@ -132,6 +135,7 @@ class vic_set_value_to_all_effect_object( bpy.types.Operator):
 class vic_healing_all_effect_objects( bpy.types.Operator):
     bl_idname = 'vic.healing_all_effect_objects'
     bl_label = 'Healing All'
+    bl_description = 'Reset mesh shape to original'
         
     def doEffect( self ):
         bpy.context.scene.frame_current = 1
@@ -300,18 +304,18 @@ class VIC_ACTION_PANEL(bpy.types.Panel):
         layout = self.layout
         
         col = layout.column(align=True)
-        col.operator("vic.mirror_cube_add")
-        col.operator("vic.vic_create_camera_target")
-        col.operator("vic.make_meshs_plane")
-        col.operator("vic.particle_rigidbody")
+        col.operator(mirror_cube_add.bl_idname)
+        col.operator(vic_create_camera_target.bl_idname)
+        col.operator(vic_make_meshs_plane.bl_idname)
+        col.operator(ParticlesToRigidbodys.bl_idname)
         
         row = col.row(align=True)
         row.prop(context.scene.action_properties, 'string_select_name' )
-        row.operator("vic.select_by_name")
+        row.operator(vic_select_by_name.bl_idname)
         
-        #col.label(text='Drag Effect')
-        #col.operator("vic.hand_drag")
-        #col.operator("vic.healing_all_effect_objects")
+        col.label(text='Drag Effect')
+        col.operator(vic_hand_drag.bl_idname)
+        col.operator(vic_healing_all_effect_objects.bl_idname)
 
         #col.label(text="BGE")
         #col.operator("vic.pure_particle")
