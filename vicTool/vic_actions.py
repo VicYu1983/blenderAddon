@@ -395,7 +395,7 @@ class ParticlesToRigidbodys(bpy.types.Operator):
         
     def executeAll(self):
         for i in range( self.update_frame ):
-            f = self.start_frame + i;
+            f = self.start_frame + i
             bpy.context.scene.frame_set(f)
             self.update(f)
             print( 'frame solved:', f )

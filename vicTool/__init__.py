@@ -12,10 +12,12 @@ bl_info = {
 
 from . import vic_actions
 from . import vic_spring_bone
+from . import vic_make_it_voxel
 
 pluginObj = (
     vic_actions,
     vic_spring_bone,
+    #vic_make_it_voxel
 )
 
 def register():
