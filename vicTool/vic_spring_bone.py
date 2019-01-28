@@ -158,6 +158,7 @@ debugView = False
 class vic_spring_bone(bpy.types.Operator):
     bl_idname = 'vic.spring_bone'
     bl_label = 'Bake Spring Bone'
+    bl_description = 'Please select bone in the pose mode'
     
     def process(self,context):
         
@@ -230,7 +231,8 @@ class vic_spring_bone(bpy.types.Operator):
         
 class vic_bones_clear_key(bpy.types.Operator):
     bl_idname = 'vic.bones_clear_key'
-    bl_label = 'Clear All Bones Key'      
+    bl_label = 'Clear Children Keys'      
+    bl_description = 'Clear all child bone keys of the target bone'
 
     def process( self, context ):
         selected_pose_bones = context.selected_pose_bones
@@ -265,7 +267,7 @@ class VIC_SPRING_BONE_TOOL(bpy.types.Panel):
         
         col = layout.column(align=True)
         col.operator("vic.spring_bone")        
-        col.operator("vic.bones_clear_key")        
+        col.operator(vic_bones_clear_key.bl_idname)        
         col.prop(context.scene.SpringBoneProperties, 'spring_bone_frame_start' ) 
         col.prop(context.scene.SpringBoneProperties, 'spring_bone_frame_end' ) 
         col = layout.column(align=True)
@@ -313,11 +315,11 @@ class SpringBoneProperties(bpy.types.PropertyGroup):
         default=True)
 
     spring_bone_frame_start = bpy.props.IntProperty(
-        name="Start Frame", description="Start frame of animation", 
+        name="Start Frame", description="Start frame of simulation", 
         default=1, step=1, min=1, max=100000)
             
     spring_bone_frame_end = bpy.props.IntProperty(
-        name="End Frame", description="End frame of animation", 
+        name="End Frame", description="End frame of simulation", 
         default=50, step=1, min=2, max=100000)    
 
 classes = (

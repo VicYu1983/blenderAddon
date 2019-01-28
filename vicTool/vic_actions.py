@@ -165,8 +165,9 @@ def createCameraTarget( currobj, targetName ):
 
 class vic_create_camera_target(bpy.types.Operator):
     bl_idname = 'vic.vic_create_camera_target'
-    bl_label = 'Create Camera Target'
-    
+    bl_label = 'Create Look At'
+    bl_description = 'Create Look At'
+
     target_name = "vic_camera_constraint_name"
     
     def execute(self, context):
@@ -184,6 +185,7 @@ class vic_create_camera_target(bpy.types.Operator):
 class vic_select_by_name(bpy.types.Operator):
     bl_idname = 'vic.select_by_name'
     bl_label = 'Select By Name'
+    bl_description = 'Select By Name'
     
     def execute(self, context):
         select_name = context.scene.action_properties.string_select_name
@@ -225,6 +227,8 @@ def createMirrorCube():
 class mirror_cube_add(bpy.types.Operator):
     bl_idname = 'vic.mirror_cube_add'
     bl_label = 'Create Mirror Cube'
+    bl_description = 'Create Mirror Cube'
+
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         if bpy.context.object != None and bpy.context.object.mode == 'EDIT':
@@ -238,7 +242,8 @@ from mathutils import geometry
 
 class vic_make_meshs_plane(bpy.types.Operator):
     bl_idname = 'vic.make_meshs_plane'
-    bl_label = 'Make Meshs Plane'
+    bl_label = 'Mesh Flatten'
+    bl_description = 'Mesh Flatten'
     
     def doPlane(self, context):
         mode = context.object.mode
@@ -319,6 +324,7 @@ class VIC_ACTION_PANEL(bpy.types.Panel):
 class ParticlesToRigidbodys(bpy.types.Operator):
     bl_idname = 'vic.particle_rigidbody'
     bl_label = 'Particles To Rigidbodys'
+    bl_description = 'Particles To Rigidbodys'
     
     def setting(self, emitter ):
         self.emitter = emitter
