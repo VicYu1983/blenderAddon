@@ -16,11 +16,11 @@ from . import vic_make_it_voxel
 
 pluginObj = (
     vic_actions,
-    vic_spring_bone,
+    vic_spring_bone
 
     # hide_viewport目前insert key在2.8好像有點bug
     # 2.8的材質沒有using vertex color的屬性，還不知道在哪裏
-    #vic_make_it_voxel
+    # vic_make_it_voxel
 )
 
 def register():
