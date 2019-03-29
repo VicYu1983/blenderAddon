@@ -5,6 +5,7 @@ from .operators import SelectByName
 from .operators import HandDrag
 from .operators import ParticleToRigidbody
 from .operators import MeshFlatten
+from .operators import ProceduralStair
 
 class ActionProperties(bpy.types.PropertyGroup):
     string_select_name = bpy.props.StringProperty( name="", description="Name of select objects", default="")    
@@ -23,6 +24,7 @@ class VIC_ACTION_PANEL(bpy.types.Panel):
         col.operator(CreateCameraTarget.vic_create_camera_target.bl_idname)
         col.operator(MeshFlatten.vic_make_meshs_plane.bl_idname)
         col.operator(ParticleToRigidbody.ParticlesToRigidbodys.bl_idname)
+        col.operator(ProceduralStair.vic_procedural_stair.bl_idname)
         
         row = col.row(align=True)
         row.prop(context.scene.action_properties, 'string_select_name' )
@@ -45,6 +47,7 @@ classes = (
     HandDrag.vic_healing_all_effect_objects,
     ParticleToRigidbody.ParticlesToRigidbodys,
     MeshFlatten.vic_make_meshs_plane,
+    ProceduralStair.vic_procedural_stair
 )
 def register():
     for cls in classes: bpy.utils.register_class(cls)
