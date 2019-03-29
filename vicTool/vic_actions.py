@@ -7,6 +7,7 @@ from .operators import MirrorCubeAdd
 from .operators import SelectByName
 from .operators import HandDrag
 from .operators import ParticleToRigidbody
+from .operators import MeshFlatten
 
 # def collectVertexColor( mesh, color_layer ):
 #     ret = {}
@@ -171,54 +172,54 @@ from .operators import ParticleToRigidbody
 #         return {'FINISHED'}       
         
 
-from mathutils import geometry
+# from mathutils import geometry
 
-class vic_make_meshs_plane(bpy.types.Operator):
-    bl_idname = 'vic.make_meshs_plane'
-    bl_label = 'Mesh Flatten'
-    bl_description = 'Mesh Flatten'
+# class vic_make_meshs_plane(bpy.types.Operator):
+#     bl_idname = 'vic.make_meshs_plane'
+#     bl_label = 'Mesh Flatten'
+#     bl_description = 'Mesh Flatten'
     
-    def doPlane(self, context):
-        mode = context.object.mode
+#     def doPlane(self, context):
+#         mode = context.object.mode
         
-        #for blender to update selected verts, faces
-        bpy.ops.object.mode_set(mode='OBJECT')
-        selectedFaces = [f for f in bpy.context.object.data.polygons if f.select]
-        selectedVerts = [v for v in bpy.context.object.data.vertices if v.select]
+#         #for blender to update selected verts, faces
+#         bpy.ops.object.mode_set(mode='OBJECT')
+#         selectedFaces = [f for f in bpy.context.object.data.polygons if f.select]
+#         selectedVerts = [v for v in bpy.context.object.data.vertices if v.select]
         
-        if len( selectedFaces ) == 0:
-            self.report( {'ERROR'}, 'select one meshs at least.' )
-        else:
-            norms = Vector()
-            centers = Vector()
-            for f in selectedFaces:
-                norms += f.normal
-                centers += f.center
+#         if len( selectedFaces ) == 0:
+#             self.report( {'ERROR'}, 'select one meshs at least.' )
+#         else:
+#             norms = Vector()
+#             centers = Vector()
+#             for f in selectedFaces:
+#                 norms += f.normal
+#                 centers += f.center
                 
-            count = len( selectedFaces ) 
+#             count = len( selectedFaces ) 
 
-            norms_aver = norms / count
-            center_aver = centers / count
+#             norms_aver = norms / count
+#             center_aver = centers / count
             
-            try:
-                for v in selectedVerts:
-                    res = geometry.intersect_line_plane( v.co, v.co + norms_aver, center_aver, norms_aver )
-                    v.co = res
-            except:
-                self.report( {'ERROR'}, 'sorry for unknown error, please retry.' )
+#             try:
+#                 for v in selectedVerts:
+#                     res = geometry.intersect_line_plane( v.co, v.co + norms_aver, center_aver, norms_aver )
+#                     v.co = res
+#             except:
+#                 self.report( {'ERROR'}, 'sorry for unknown error, please retry.' )
             
-            bpy.ops.object.mode_set(mode=mode)
+#             bpy.ops.object.mode_set(mode=mode)
             
-    def execute(self, context):
-        if context.view_layer.objects.active == None:
-            self.report( {'ERROR'}, 'please pick one object!' )
-            return {'FINISHED'}
-        else:
-            if context.object.mode != 'EDIT':
-                self.report( {'ERROR'}, 'should be in the edit mode!' )
-            else:
-                self.doPlane(context)
-            return {'FINISHED'}        
+#     def execute(self, context):
+#         if context.view_layer.objects.active == None:
+#             self.report( {'ERROR'}, 'please pick one object!' )
+#             return {'FINISHED'}
+#         else:
+#             if context.object.mode != 'EDIT':
+#                 self.report( {'ERROR'}, 'should be in the edit mode!' )
+#             else:
+#                 self.doPlane(context)
+#             return {'FINISHED'}        
 
 class ActionProperties(bpy.types.PropertyGroup):
     string_select_name = bpy.props.StringProperty( name="", description="Name of select objects", default="")    
@@ -235,7 +236,7 @@ class VIC_ACTION_PANEL(bpy.types.Panel):
         col = layout.column(align=True)
         col.operator(MirrorCubeAdd.mirror_cube_add.bl_idname)
         col.operator(CreateCameraTarget.vic_create_camera_target.bl_idname)
-        col.operator(vic_make_meshs_plane.bl_idname)
+        col.operator(MeshFlatten.vic_make_meshs_plane.bl_idname)
         col.operator(ParticleToRigidbody.ParticlesToRigidbodys.bl_idname)
         
         row = col.row(align=True)
@@ -356,8 +357,7 @@ classes = (
     HandDrag.vic_hand_drag,
     HandDrag.vic_healing_all_effect_objects,
     ParticleToRigidbody.ParticlesToRigidbodys,
-
-    vic_make_meshs_plane,
+    MeshFlatten.vic_make_meshs_plane,
 )
 def register():
     for cls in classes: bpy.utils.register_class(cls)
