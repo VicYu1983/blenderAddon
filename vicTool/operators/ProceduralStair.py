@@ -136,7 +136,7 @@ class vic_procedural_stair(bpy.types.Operator):
 
     # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
     # 用兩條綫上的點來產生面
-    def addVertexAndFaces(self, line, offset, verts, faces, flip = False, close = False):
+    def addVertexAndFaces(self, line, offset, verts, faces, uvs, flip = False, close = False):
         anotherLine = []
         startId = len(verts)
         for i, v in enumerate(line):
@@ -168,6 +168,10 @@ class vic_procedural_stair(bpy.types.Operator):
         line.extend(anotherLine)
         verts.extend(line)
 
+        for v in line:
+            uv = Vector((v[0], v[1]))
+            uvs.append(uv)
+
     def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
         for m in mesh.data.polygons:
             vs = []
@@ -186,14 +190,16 @@ class vic_procedural_stair(bpy.types.Operator):
             self.verts.append( newpos )
 
     def assignMaterial(self, obj):
-        # create material
         if not 'StairMaterial' in bpy.data.materials:
             bpy.data.materials.new(name="StairMaterial")
+
         mat = bpy.data.materials.get("StairMaterial")
         if obj.data.materials:
             obj.data.materials[0] = mat
         else:
             obj.data.materials.append(mat)
+
+        obj.data.uv_layers.new()
 
     def createWall(self, mesh):
         stepHeight = self.height / self.count
@@ -268,6 +274,7 @@ class vic_procedural_stair(bpy.types.Operator):
     def execute(self, context):
         self.verts = []
         self.faces = []
+        self.uvs = []
 
         # unselect all of object, and then can join my own object
         for obj in bpy.context.view_layer.objects:
@@ -284,14 +291,14 @@ class vic_procedural_stair(bpy.types.Operator):
             line.append((i*stepDepth+stepDepth,-x,i*stepHeight+stepHeight))
         lastVertex = line[len(line)-1]
         line.append((lastVertex[0],lastVertex[1],0))
-        self.addVertexAndFaces(line, (0, self.width, 0), self.verts, self.faces, flip=True)
+        self.addVertexAndFaces(line, (0, self.width, 0), self.verts, self.faces, self.uvs, flip=True)
 
         for i in range(self.count):
             self.addVertexAndFaces([
                 (i*stepDepth,-x, i*stepHeight+stepHeight),
                 (i*stepDepth,-x,0),(i*stepDepth,x,0),
                 (i*stepDepth,x,i*stepHeight+stepHeight)
-                ], (stepDepth, 0, 0), self.verts, self.faces, flip=True)
+                ], (stepDepth, 0, 0), self.verts, self.faces, self.uvs, flip=True)
         
         mesh = bpy.data.meshes.new("Stair")
         obj = bpy.data.objects.new("Stair", mesh)
@@ -300,6 +307,11 @@ class vic_procedural_stair(bpy.types.Operator):
         addObject(obj)
 
         self.assignMaterial(obj)
+
+        # assign uv
+        for face in obj.data.polygons:
+            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                obj.data.uv_layers.active.data[loop_idx].uv = self.uvs[vert_idx]
             
         # check the name of object in the scene! if not, set value to empty
         try:
