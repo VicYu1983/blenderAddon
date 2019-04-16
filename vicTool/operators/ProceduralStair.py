@@ -96,21 +96,38 @@ class vic_procedural_stair(bpy.types.Operator):
         default=0.0
     )
 
-    wallUvCenter:FloatProperty(
-        name='Wall UV Center',
+    stairUvCenter:FloatProperty(
+        name='UV Center',
         min=0.0,
         max=1.0,
         default=.5
     )
 
-    wallUvScaleX:FloatProperty(
-        name='Wall UV Scale X',
+    stairUvScaleX:FloatProperty(
+        name='UV Scale X',
         default=1.0
     )
 
-    wallSideUvScale:FloatProperty(
-        name='Wall Side UV Scale',
+    stairUvStep:IntProperty(
+        name='UV Step',
+        min=1,
+        max=10,
+        default=4
+    )
+
+    stairSideUvScale:FloatProperty(
+        name='Side UV Scale',
         default=1.0
+    )
+
+    stairMaterial:StringProperty(
+        name='Stair',
+        default='StairMaterial'
+    )
+
+    stairSideMaterial:StringProperty(
+        name='Side',
+        default='StairSideMaterial'
     )
 
     count:IntProperty(
@@ -226,9 +243,10 @@ class vic_procedural_stair(bpy.types.Operator):
     def assignMaterial(self, obj):
         self.addMaterial('StairMaterial')
         self.addMaterial('StairSideMaterial')
-
-        obj.data.materials.append(bpy.data.materials.get("StairMaterial"))
-        obj.data.materials.append(bpy.data.materials.get("StairSideMaterial"))
+        if self.stairMaterial != '':
+            obj.data.materials.append(bpy.data.materials.get(self.stairMaterial))
+        if self.stairSideMaterial != '':
+            obj.data.materials.append(bpy.data.materials.get(self.stairSideMaterial))
         obj.data.uv_layers.new()
 
     def createWall(self, mesh):
@@ -322,19 +340,20 @@ class vic_procedural_stair(bpy.types.Operator):
             line.append((i*stepDepth,-x,i*stepHeight+stepHeight))
             line.append((i*stepDepth+stepDepth,-x,i*stepHeight+stepHeight))
 
-            uv.append((0,0))
-            uv.append((0,self.wallUvCenter))
-            uv.append((0,1))
+            uvIndex = i % self.stairUvStep
+            uv.append((0,uvIndex/self.stairUvStep))
+            uv.append((0,uvIndex/self.stairUvStep + self.stairUvCenter/self.stairUvStep))
+            uv.append((0,uvIndex/self.stairUvStep + 1/self.stairUvStep))
 
         lastVertex = line[len(line)-1]
 
         # 階梯的點及uv
         self.addVertexAndFaces(line, (0, self.width, 0), 0, self.verts, self.faces, self.matIds, flip=True)
-        self.addUV(uv, (self.wallUvScaleX,0), self.uvs)
+        self.addUV(uv, (self.stairUvScaleX,0), self.uvs)
 
         # 背面的點及uv
         self.addVertexAndFaces([lastVertex, (lastVertex[0],lastVertex[1],0)], (0, self.width, 0), 1, self.verts, self.faces, self.matIds, flip=True)
-        self.addUV([(0,lastVertex[2]),(0,0)], (self.width,0), self.uvs, self.wallSideUvScale)
+        self.addUV([(0,lastVertex[2]),(0,0)], (self.width,0), self.uvs, self.stairSideUvScale)
 
         for i in range(self.count):
             self.addVertexAndFaces([
@@ -348,7 +367,7 @@ class vic_procedural_stair(bpy.types.Operator):
                 (i*stepDepth,0),
                 (i*stepDepth,0),
                 (i*stepDepth,i*stepHeight+stepHeight)
-            ], (stepDepth,0), self.uvs, self.wallSideUvScale)
+            ], (stepDepth,0), self.uvs, self.stairSideUvScale)
         
         mesh = bpy.data.meshes.new("Stair")
         obj = bpy.data.objects.new("Stair", mesh)
@@ -377,6 +396,8 @@ class vic_procedural_stair(bpy.types.Operator):
             else:
                 print('Please Select Mesh Object!')
 
+        activeObject(self.startObject)
+
         return {'FINISHED'}
 
     def draw(self, context):
@@ -384,7 +405,7 @@ class vic_procedural_stair(bpy.types.Operator):
         scene = context.scene
 
         box = layout.box()
-        box.label(text='Stair Setting')
+        box.label(text='Stair Mesh')
         row = box.row()
         row.prop(self, 'width')
         row.prop(self, 'height')
@@ -392,8 +413,17 @@ class vic_procedural_stair(bpy.types.Operator):
         row.prop(self, 'count')
         row.prop(self, 'stepDepth')
 
+        box.label(text='Stair Material')
+        row = box.row()
+        box.prop(self, 'stairUvStep')
+        row.prop(self, 'stairUvCenter')
+        row.prop(self, 'stairUvScaleX')
+        box.prop(self, 'stairSideUvScale')
+        box.prop_search(self, "stairMaterial", bpy.data, "materials")
+        box.prop_search(self, "stairSideMaterial", bpy.data, "materials")
+
         box = layout.box()
-        box.label(text='Wall Setting')
+        box.label(text='Wall Mesh')
         row = box.row()
         row.prop(self, 'showWall')
         row.prop(self, 'editMode')
@@ -403,10 +433,7 @@ class vic_procedural_stair(bpy.types.Operator):
         row.prop(self, 'wallHeight')
         row.prop(self, 'wallOffsetY')
         
-        row = box.row()
-        row.prop(self, 'wallUvCenter')
-        row.prop(self, 'wallUvScaleX')
-        box.prop(self, 'wallSideUvScale')
+        
 
         #row.operator('vic.vic_procedural_stair')
         #row.operator('vic.vic_procedural_stair_save').data = repr([self.wallMesh])
