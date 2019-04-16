@@ -96,6 +96,23 @@ class vic_procedural_stair(bpy.types.Operator):
         default=0.0
     )
 
+    wallUvCenter:FloatProperty(
+        name='Wall UV Center',
+        min=0.0,
+        max=1.0,
+        default=.5
+    )
+
+    wallUvScaleX:FloatProperty(
+        name='Wall UV Scale X',
+        default=1.0
+    )
+
+    wallSideUvScale:FloatProperty(
+        name='Wall Side UV Scale',
+        default=1.0
+    )
+
     count:IntProperty(
         name='Step Count',
         min=1,
@@ -134,9 +151,25 @@ class vic_procedural_stair(bpy.types.Operator):
     #     poll=scene_mychosenobject_poll
     # )
 
+    def addUV(self, line, offset, uvs, scale=1):
+        anotherLine = []
+        for v in line:
+            offsetVert = (  v[0] + offset[0],
+                            v[1] + offset[1])
+            anotherLine.append(offsetVert)
+        line.extend(anotherLine)
+
+        for v in line:
+            uvs.append(
+                (
+                    v[0] * scale,
+                    v[1] * scale
+                )
+            )
+
     # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
     # 用兩條綫上的點來產生面
-    def addVertexAndFaces(self, line, offset, verts, faces, uvs, flip = False, close = False):
+    def addVertexAndFaces(self, line, offset, matId, verts, faces, matIds, flip = False, close = False):
         anotherLine = []
         startId = len(verts)
         for i, v in enumerate(line):
@@ -164,13 +197,10 @@ class vic_procedural_stair(bpy.types.Operator):
                 else:
                     f = (v1, v2, v3, v4)
             faces.append(f)
+            matIds.append(matId)
 
         line.extend(anotherLine)
         verts.extend(line)
-
-        for v in line:
-            uv = Vector((v[0], v[1]))
-            uvs.append(uv)
 
     def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
         for m in mesh.data.polygons:
@@ -189,16 +219,16 @@ class vic_procedural_stair(bpy.types.Operator):
             )
             self.verts.append( newpos )
 
+    def addMaterial(self, name):
+        if not name in bpy.data.materials:
+            bpy.data.materials.new(name=name)
+
     def assignMaterial(self, obj):
-        if not 'StairMaterial' in bpy.data.materials:
-            bpy.data.materials.new(name="StairMaterial")
+        self.addMaterial('StairMaterial')
+        self.addMaterial('StairSideMaterial')
 
-        mat = bpy.data.materials.get("StairMaterial")
-        if obj.data.materials:
-            obj.data.materials[0] = mat
-        else:
-            obj.data.materials.append(mat)
-
+        obj.data.materials.append(bpy.data.materials.get("StairMaterial"))
+        obj.data.materials.append(bpy.data.materials.get("StairSideMaterial"))
         obj.data.uv_layers.new()
 
     def createWall(self, mesh):
@@ -275,6 +305,7 @@ class vic_procedural_stair(bpy.types.Operator):
         self.verts = []
         self.faces = []
         self.uvs = []
+        self.matIds = []
 
         # unselect all of object, and then can join my own object
         for obj in bpy.context.view_layer.objects:
@@ -285,20 +316,39 @@ class vic_procedural_stair(bpy.types.Operator):
         stepDepth = self.stepDepth
 
         line = []
+        uv = []
         for i in range(self.count):
             line.append((i*stepDepth,-x,i*stepHeight))
             line.append((i*stepDepth,-x,i*stepHeight+stepHeight))
             line.append((i*stepDepth+stepDepth,-x,i*stepHeight+stepHeight))
+
+            uv.append((0,0))
+            uv.append((0,self.wallUvCenter))
+            uv.append((0,1))
+
         lastVertex = line[len(line)-1]
-        line.append((lastVertex[0],lastVertex[1],0))
-        self.addVertexAndFaces(line, (0, self.width, 0), self.verts, self.faces, self.uvs, flip=True)
+
+        # 階梯的點及uv
+        self.addVertexAndFaces(line, (0, self.width, 0), 0, self.verts, self.faces, self.matIds, flip=True)
+        self.addUV(uv, (self.wallUvScaleX,0), self.uvs)
+
+        # 背面的點及uv
+        self.addVertexAndFaces([lastVertex, (lastVertex[0],lastVertex[1],0)], (0, self.width, 0), 1, self.verts, self.faces, self.matIds, flip=True)
+        self.addUV([(0,lastVertex[2]),(0,0)], (self.width,0), self.uvs, self.wallSideUvScale)
 
         for i in range(self.count):
             self.addVertexAndFaces([
                 (i*stepDepth,-x, i*stepHeight+stepHeight),
-                (i*stepDepth,-x,0),(i*stepDepth,x,0),
+                (i*stepDepth,-x,0),
+                (i*stepDepth,x,0),
                 (i*stepDepth,x,i*stepHeight+stepHeight)
-                ], (stepDepth, 0, 0), self.verts, self.faces, self.uvs, flip=True)
+                ], (stepDepth, 0, 0), 1, self.verts, self.faces, self.matIds, flip=True)
+            self.addUV([
+                (i*stepDepth,i*stepHeight+stepHeight),
+                (i*stepDepth,0),
+                (i*stepDepth,0),
+                (i*stepDepth,i*stepHeight+stepHeight)
+            ], (stepDepth,0), self.uvs, self.wallSideUvScale)
         
         mesh = bpy.data.meshes.new("Stair")
         obj = bpy.data.objects.new("Stair", mesh)
@@ -309,9 +359,10 @@ class vic_procedural_stair(bpy.types.Operator):
         self.assignMaterial(obj)
 
         # assign uv
-        for face in obj.data.polygons:
+        for i, face in enumerate(obj.data.polygons):
             for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
                 obj.data.uv_layers.active.data[loop_idx].uv = self.uvs[vert_idx]
+            face.material_index = self.matIds[i]
             
         # check the name of object in the scene! if not, set value to empty
         try:
@@ -319,7 +370,7 @@ class vic_procedural_stair(bpy.types.Operator):
         except:
             self.wallMesh = ''
         meshName = self.wallMesh
-        if (meshName != ''):
+        if (self.showWall and meshName != ''):
             wallMesh = bpy.context.view_layer.objects[meshName]
             if wallMesh.type == 'MESH':
                 self.createWall(wallMesh)
@@ -344,13 +395,19 @@ class vic_procedural_stair(bpy.types.Operator):
         box = layout.box()
         box.label(text='Wall Setting')
         row = box.row()
+        row.prop(self, 'showWall')
+        row.prop(self, 'editMode')
+        box.prop_search(self, "wallMesh", scene, "objects")
+        
+        row = box.row()
         row.prop(self, 'wallHeight')
         row.prop(self, 'wallOffsetY')
-
+        
         row = box.row()
-        row.prop(self, 'editMode')
-        row.prop_search(self, "wallMesh", scene, "objects")
-        #box.prop(self, 'editMode')
+        row.prop(self, 'wallUvCenter')
+        row.prop(self, 'wallUvScaleX')
+        box.prop(self, 'wallSideUvScale')
+
         #row.operator('vic.vic_procedural_stair')
         #row.operator('vic.vic_procedural_stair_save').data = repr([self.wallMesh])
 
