@@ -73,54 +73,54 @@ class vic_procedural_stair(bpy.types.Operator):
     bl_description = ''
     bl_options = {'REGISTER', 'UNDO'}
 
-    width = FloatProperty(
+    width:FloatProperty(
         name='Width',
         min=1.0,
         default=3.0
     )
 
-    height = FloatProperty(
+    height:FloatProperty(
         name='Height',
         min=1.0,
         default=5.0
     )
 
-    wallHeight = FloatProperty(
+    wallHeight:FloatProperty(
         name='Wall Height',
         min=0.0,
         default=1.0
     )
 
-    wallOffsetY = FloatProperty(
+    wallOffsetY:FloatProperty(
         name='Wall OffsetY',
         default=0.0
     )
 
-    count = IntProperty(
+    count:IntProperty(
         name='Step Count',
         min=1,
         max=50,
         default=10
     )
 
-    stepDepth = FloatProperty(
+    stepDepth:FloatProperty(
         name='Step Depth',
         min=.1,
         default=1.
     )
 
-    # showWall = BoolProperty(
-    #     name='Show Wall',
-    #     default=True
-    # )
+    showWall:BoolProperty(
+        name='Show Wall',
+        default=True
+    )
 
-    editMode = BoolProperty(
+    editMode:BoolProperty(
         name='Edit Mode',
         default=True,
         description='Turn off and press [Create Stair] again to get result mesh!'
     )
 
-    wallMesh = StringProperty(
+    wallMesh:StringProperty(
         name='Pick Mesh',
         description='DO NOT Pick Self!',
         default=''

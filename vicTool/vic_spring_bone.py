@@ -256,7 +256,7 @@ class vic_bones_clear_key(bpy.types.Operator):
             self.process( context )
             return {'FINISHED'}
         
-class VIC_SPRING_BONE_TOOL(bpy.types.Panel):
+class VIC_PT_SPRING_BONE_TOOL(bpy.types.Panel):
     bl_category = "Vic Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -282,50 +282,50 @@ class VIC_SPRING_BONE_TOOL(bpy.types.Panel):
 #=======================================
 
 class SpringBoneProperties(bpy.types.PropertyGroup):
-    spring_bone_extend_factor = bpy.props.FloatProperty(
+    spring_bone_extend_factor:bpy.props.FloatProperty(
         name='Extend',
         default=0.0,
         min=0.0,
         max=1.0
     )
 
-    spring_bone_spring_factor = bpy.props.FloatProperty(
+    spring_bone_spring_factor:bpy.props.FloatProperty(
         name='Keep',
         default=.6,
         min=0.0,
         max=1.0
     )
 
-    spring_bone_gravity_factor = bpy.props.FloatProperty(
+    spring_bone_gravity_factor:bpy.props.FloatProperty(
         name='Gravity',
         default=0.0,
         min=0.0,
         max=1.0
     )
 
-    spring_bone_friction_factor = bpy.props.FloatProperty(
+    spring_bone_friction_factor:bpy.props.FloatProperty(
         name='Friction',
         default=0.5,
         min=0.0,
         max=1.0
     )
 
-    spring_bone_keep_is_spring = bpy.props.BoolProperty(
+    spring_bone_keep_is_spring:bpy.props.BoolProperty(
         name='Spring',
         default=True)
 
-    spring_bone_frame_start = bpy.props.IntProperty(
+    spring_bone_frame_start:bpy.props.IntProperty(
         name="Start Frame", description="Start frame of simulation", 
         default=1, step=1, min=1, max=100000)
             
-    spring_bone_frame_end = bpy.props.IntProperty(
+    spring_bone_frame_end:bpy.props.IntProperty(
         name="End Frame", description="End frame of simulation", 
         default=50, step=1, min=2, max=100000)    
 
 classes = (
     # ui
     SpringBoneProperties,
-    VIC_SPRING_BONE_TOOL,
+    VIC_PT_SPRING_BONE_TOOL,
 
     # operation
     vic_bones_clear_key,

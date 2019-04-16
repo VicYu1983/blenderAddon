@@ -8,9 +8,9 @@ from .operators import MeshFlatten
 from .operators import ProceduralStair
 
 class ActionProperties(bpy.types.PropertyGroup):
-    string_select_name = bpy.props.StringProperty( name="", description="Name of select objects", default="")    
+    string_select_name:bpy.props.StringProperty( name="", description="Name of select objects", default="")    
 
-class VIC_ACTION_PANEL(bpy.types.Panel):
+class VIC_PT_ACTION_PANEL(bpy.types.Panel):
     bl_category = "Vic Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
@@ -38,7 +38,7 @@ class VIC_ACTION_PANEL(bpy.types.Panel):
 classes = (
     # ui
     ActionProperties,
-    VIC_ACTION_PANEL,
+    VIC_PT_ACTION_PANEL,
 
     # operation
     CreateCameraTarget.vic_create_camera_target,
