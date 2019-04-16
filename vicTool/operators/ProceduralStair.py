@@ -220,13 +220,20 @@ class vic_procedural_stair(bpy.types.Operator):
         verts.extend(line)
 
     def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
+
+        uvMap = {}
         for m in mesh.data.polygons:
             vs = []
             currentVertexCount = len(self.verts)
             for vid in m.vertices:
                 vs.append(vid + currentVertexCount)
             self.faces.append(tuple(vs))
-        
+            self.matIds.append(m.material_index+2)
+
+            for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
+                #self.uvs.append(mesh.data.uv_layers.active.data[loop_idx].uv)
+                uvMap[vert_idx] = mesh.data.uv_layers.active.data[loop_idx].uv
+
         for vid,v in enumerate(mesh.data.vertices):
             pos = v.co
             newpos = (
@@ -235,18 +242,26 @@ class vic_procedural_stair(bpy.types.Operator):
                 pos.z + tanRadian * (pos.x * scaleFactor) + wallPos.z + startPos.z + self.wallHeight
             )
             self.verts.append( newpos )
+            self.uvs.append(uvMap[vid])
+
+        #for loop in mesh.data.loops :
+        #    uv_coords = mesh.data.uv_layers.active.data[loop.index].uv
+        #    self.uvs.append(uv_coords)
 
     def addMaterial(self, name):
         if not name in bpy.data.materials:
             bpy.data.materials.new(name=name)
 
-    def assignMaterial(self, obj):
+    def assignMaterial(self, obj, wallMesh):
         self.addMaterial('StairMaterial')
         self.addMaterial('StairSideMaterial')
         if self.stairMaterial != '':
             obj.data.materials.append(bpy.data.materials.get(self.stairMaterial))
         if self.stairSideMaterial != '':
             obj.data.materials.append(bpy.data.materials.get(self.stairSideMaterial))
+        if wallMesh is not None:
+            for mat in wallMesh.data.materials:
+                obj.data.materials.append(mat)
         obj.data.uv_layers.new()
 
     def createWall(self, mesh):
@@ -265,59 +280,49 @@ class vic_procedural_stair(bpy.types.Operator):
         tanRadian = tan(radian)
 
         #create mesh in the same object
-        # for i in range(count):
-        #     wallPos = wallSingle * (i + .5)
-        #     self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY)
-        #     self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY)
-
-        # create mesh for every wall
-        wallPrototype = copyObject(mesh)
-        for v in wallPrototype.data.vertices:
-            pos = v.co
-            v.co = (
-                pos.x * scaleFactor, 
-                pos.y, 
-                pos.z + tanRadian * (pos.x * scaleFactor)
-            )
-
-        wallObj = []
-        for i in range(count):
-            wallPos = wallSingle * (i + .5)
-            cloneWall = copyObject(wallPrototype, True)
-            cloneWall.location.x = wallPos.x + startPos.x
-            cloneWall.location.y = wallPos.y + startPos.y + self.width/2-self.wallOffsetY
-            cloneWall.location.z = wallPos.z + startPos.z + self.wallHeight
-            addObject(cloneWall)
-            wallObj.append(cloneWall)
-
-            cloneWall = copyObject(wallPrototype, True)
-            cloneWall.location.x = wallPos.x + startPos.x
-            cloneWall.location.y = wallPos.y + startPos.y + -self.width/2+self.wallOffsetY
-            cloneWall.location.z = wallPos.z + startPos.z + self.wallHeight
-            addObject(cloneWall)
-            wallObj.append(cloneWall)
-
-        bpy.data.objects.remove(wallPrototype, do_unlink=True)
-
-        for obj in bpy.context.view_layer.objects:
-            obj.select_set(False)
-        for wall in wallObj:
-            wall.select_set(True)
-        self.startObject.select_set(True)
-        activeObject(self.startObject)
-
-        # 因爲不能動態join，所以只能利用打開這個功能時的預設值來決定要不要join
         if not self.editMode:
-            bpy.ops.object.join()
+            for i in range(count):
+                wallPos = wallSingle * (i + .5)
+                self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY)
+                self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY)
+        else:
+            # create mesh for every wall
+            wallPrototype = copyObject(mesh)
+            for v in wallPrototype.data.vertices:
+                pos = v.co
+                v.co = (
+                    pos.x * scaleFactor, 
+                    pos.y, 
+                    pos.z + tanRadian * (pos.x * scaleFactor)
+                )
+            wallObj = []
+            for i in range(count):
+                wallPos = wallSingle * (i + .5)
+                cloneWall = copyObject(wallPrototype, True)
+                cloneWall.location.x = wallPos.x + startPos.x
+                cloneWall.location.y = wallPos.y + startPos.y + self.width/2-self.wallOffsetY
+                cloneWall.location.z = wallPos.z + startPos.z + self.wallHeight
+                addObject(cloneWall)
+                wallObj.append(cloneWall)
 
-        # 好像沒辦法動態join
-        # for obj in bpy.context.view_layer.objects:
-        #     obj.select_set(False)
-        # for wall in wallObj:
-        #     wall.select_set(True)
-        # self.startObject.select_set(True)
-        # activeObject(self.startObject)
-        # bpy.ops.object.join()
+                cloneWall = copyObject(wallPrototype, True)
+                cloneWall.location.x = wallPos.x + startPos.x
+                cloneWall.location.y = wallPos.y + startPos.y + -self.width/2+self.wallOffsetY
+                cloneWall.location.z = wallPos.z + startPos.z + self.wallHeight
+                addObject(cloneWall)
+                wallObj.append(cloneWall)
+            bpy.data.objects.remove(wallPrototype, do_unlink=True)
+
+            # for obj in bpy.context.view_layer.objects:
+            #     obj.select_set(False)
+            # for wall in wallObj:
+            #     wall.select_set(True)
+            # self.startObject.select_set(True)
+            # activeObject(self.startObject)
+
+            #因爲不能動態join，所以只能利用打開這個功能時的預設值來決定要不要join
+            #if not self.editMode:
+            #    bpy.ops.object.join()
 
     def execute(self, context):
         self.verts = []
@@ -369,26 +374,13 @@ class vic_procedural_stair(bpy.types.Operator):
                 (i*stepDepth,i*stepHeight+stepHeight)
             ], (stepDepth,0), self.uvs, self.stairSideUvScale)
         
-        mesh = bpy.data.meshes.new("Stair")
-        obj = bpy.data.objects.new("Stair", mesh)
-        self.startObject = obj
-        mesh.from_pydata(self.verts, [], self.faces)
-        addObject(obj)
-
-        self.assignMaterial(obj)
-
-        # assign uv
-        for i, face in enumerate(obj.data.polygons):
-            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-                obj.data.uv_layers.active.data[loop_idx].uv = self.uvs[vert_idx]
-            face.material_index = self.matIds[i]
-            
         # check the name of object in the scene! if not, set value to empty
         try:
             bpy.context.view_layer.objects[self.wallMesh]
         except:
             self.wallMesh = ''
         meshName = self.wallMesh
+        wallMesh = None
         if (self.showWall and meshName != ''):
             wallMesh = bpy.context.view_layer.objects[meshName]
             if wallMesh.type == 'MESH':
@@ -396,7 +388,19 @@ class vic_procedural_stair(bpy.types.Operator):
             else:
                 print('Please Select Mesh Object!')
 
-        activeObject(self.startObject)
+        mesh = bpy.data.meshes.new("Stair")
+        obj = bpy.data.objects.new("Stair", mesh)
+        mesh.from_pydata(self.verts, [], self.faces)
+        addObject(obj)
+        self.assignMaterial(obj, wallMesh)
+
+        # assign uv
+        for i, face in enumerate(obj.data.polygons):
+            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
+                obj.data.uv_layers.active.data[loop_idx].uv = self.uvs[vert_idx]
+            face.material_index = self.matIds[i]
+
+        activeObject(obj)
 
         return {'FINISHED'}
 
