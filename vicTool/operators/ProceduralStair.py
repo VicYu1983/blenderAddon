@@ -53,12 +53,12 @@ class vic_procedural_stair(bpy.types.Operator):
     wallHeight:FloatProperty(
         name='Wall Height',
         min=0.0,
-        default=1.0
+        default=0.0
     )
 
     wallOffsetY:FloatProperty(
         name='Wall OffsetY',
-        default=0.0
+        default=0.5
     )
 
     stairUvCenter:FloatProperty(
@@ -129,6 +129,12 @@ class vic_procedural_stair(bpy.types.Operator):
         name='Pick Pile',
         description='',
         default=''
+    )
+
+    pileCount:IntProperty(
+        name='Pile Per Step',
+        min=1,
+        default=4
     )
 
     # def scene_mychosenobject_poll(self, object):
@@ -331,6 +337,11 @@ class vic_procedural_stair(bpy.types.Operator):
         stepHeight = self.height / self.count
         stepDepth = self.stepDepth
 
+        pilePerStep = self.pileCount
+        if pilePerStep > self.count:
+            pilePerStep = self.count - 1
+            self.pileCount = pilePerStep
+
         line = []
         uv = []
         piles = []
@@ -344,7 +355,7 @@ class vic_procedural_stair(bpy.types.Operator):
             uv.append((0,uvIndex/self.stairUvStep + self.stairUvCenter/self.stairUvStep))
             uv.append((0,uvIndex/self.stairUvStep + 1/self.stairUvStep))
 
-            if i % 4 == 0 or (i == self.count - 1):
+            if i % pilePerStep == 0 or (i == self.count - 1):
                 piles.append((i*stepDepth + stepDepth/2,-x,i*stepHeight+stepHeight))
 
         lastVertex = line[len(line)-1]
@@ -392,14 +403,10 @@ class vic_procedural_stair(bpy.types.Operator):
                 wallMesh = bpy.context.view_layer.objects[self.wallMesh]
                 if wallMesh.type == 'MESH':
                     self.createWall(wallMesh)
-                else:
-                    print('Please Select Mesh Object!')
             if (self.pileMesh != ''):
                 pileMesh = bpy.context.view_layer.objects[self.pileMesh]
                 if pileMesh.type == 'MESH':
                     self.createPile(pileMesh, piles)
-                else:
-                    print('Please Select Mesh Object!')
 
         mesh = bpy.data.meshes.new("Stair")
         obj = bpy.data.objects.new("Stair", mesh)
@@ -442,6 +449,7 @@ class vic_procedural_stair(bpy.types.Operator):
         row = box.row()
         row.prop(self, 'wallHeight')
         row.prop(self, 'wallOffsetY')
+        box.prop(self, 'pileCount')
 
         box = layout.box()
         box.label(text='Stair Material')
