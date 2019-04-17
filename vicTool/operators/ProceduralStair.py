@@ -115,12 +115,18 @@ class vic_procedural_stair(bpy.types.Operator):
 
     editMode:BoolProperty(
         name='Edit Mode',
-        default=True,
+        default=False,
         description='Turn off this will combine all mesh to one'
     )
 
     wallMesh:StringProperty(
-        name='Pick',
+        name='Pick Wall',
+        description='',
+        default=''
+    )
+
+    pileMesh:StringProperty(
+        name='Pick Pile',
         description='',
         default=''
     )
@@ -190,8 +196,31 @@ class vic_procedural_stair(bpy.types.Operator):
         line.extend(anotherLine)
         self.verts.extend(line)
 
-    def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
+    def createPileMesh(self, mesh, pilePos, offsetY):
+        uvMap = {}
+        currentFaceId = len(self.faces)
+        currentVertId = len(self.verts)
+        for m in mesh.data.polygons:
+            vs = []
+            currentVertexCount = len(self.verts)
+            for vid in m.vertices:
+                vs.append(vid + currentVertexCount)
+            self.faces.append(tuple(vs))
+            self.matIds.append(m.material_index+3)
 
+            for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
+                self.uvsMap["%i_%i" % (m.index+currentFaceId,vert_idx+currentVertId)] = mesh.data.uv_layers.active.data[loop_idx].uv
+
+        for vid,v in enumerate(mesh.data.vertices):
+            pos = v.co
+            newpos = (
+                pos.x + pilePos[0], 
+                pos.y + offsetY, 
+                pos.z + pilePos[2]
+            )
+            self.verts.append( newpos )
+
+    def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
         uvMap = {}
         currentFaceId = len(self.faces)
         currentVertId = len(self.verts)
@@ -219,7 +248,7 @@ class vic_procedural_stair(bpy.types.Operator):
         if not name in bpy.data.materials:
             bpy.data.materials.new(name=name)
 
-    def assignMaterial(self, obj, wallMesh):
+    def assignMaterial(self, obj, wallMesh, pileMesh):
         self.addMaterial('StairMaterial')
         self.addMaterial('StairSideMaterial')
         if self.stairMaterial != '':
@@ -229,7 +258,15 @@ class vic_procedural_stair(bpy.types.Operator):
         if wallMesh is not None:
             for mat in wallMesh.data.materials:
                 obj.data.materials.append(mat)
+        if pileMesh is not None:
+            for mat in pileMesh.data.materials:
+                obj.data.materials.append(mat)
         obj.data.uv_layers.new()
+
+    def createPile(self, mesh, piles):
+        for p in piles:
+            self.createPileMesh(mesh, p, self.width/2-self.wallOffsetY)
+            self.createPileMesh(mesh, p, -self.width/2+self.wallOffsetY)
 
     def createWall(self, mesh):
         stepHeight = self.height / self.count
@@ -296,6 +333,7 @@ class vic_procedural_stair(bpy.types.Operator):
 
         line = []
         uv = []
+        piles = []
         for i in range(self.count):
             line.append((i*stepDepth,-x,i*stepHeight))
             line.append((i*stepDepth,-x,i*stepHeight+stepHeight))
@@ -306,8 +344,10 @@ class vic_procedural_stair(bpy.types.Operator):
             uv.append((0,uvIndex/self.stairUvStep + self.stairUvCenter/self.stairUvStep))
             uv.append((0,uvIndex/self.stairUvStep + 1/self.stairUvStep))
 
-        lastVertex = line[len(line)-1]
+            if i % 4 == 0 or (i == self.count - 1):
+                piles.append((i*stepDepth + stepDepth/2,-x,i*stepHeight+stepHeight))
 
+        lastVertex = line[len(line)-1]
         # 階梯的點及uv
         self.addVertexAndFaces(
             line, (0, self.width, 0), 
@@ -320,6 +360,7 @@ class vic_procedural_stair(bpy.types.Operator):
             [(0,lastVertex[2]),(0,0)], (self.width,0),
             self.stairSideUvScale, 1, flip=True)
 
+        # 側墻的點及uv
         for i in range(self.count):
             self.addVertexAndFaces([
                 (i*stepDepth,-x, i*stepHeight+stepHeight),
@@ -338,20 +379,33 @@ class vic_procedural_stair(bpy.types.Operator):
             bpy.context.view_layer.objects[self.wallMesh]
         except:
             self.wallMesh = ''
-        meshName = self.wallMesh
+        
+        try:
+            bpy.context.view_layer.objects[self.pileMesh]
+        except:
+            self.pileMesh = ''
+
         wallMesh = None
-        if (self.showWall and meshName != ''):
-            wallMesh = bpy.context.view_layer.objects[meshName]
-            if wallMesh.type == 'MESH':
-                self.createWall(wallMesh)
-            else:
-                print('Please Select Mesh Object!')
+        pileMesh = None
+        if (self.showWall):
+            if self.wallMesh != '':
+                wallMesh = bpy.context.view_layer.objects[self.wallMesh]
+                if wallMesh.type == 'MESH':
+                    self.createWall(wallMesh)
+                else:
+                    print('Please Select Mesh Object!')
+            if (self.pileMesh != ''):
+                pileMesh = bpy.context.view_layer.objects[self.pileMesh]
+                if pileMesh.type == 'MESH':
+                    self.createPile(pileMesh, piles)
+                else:
+                    print('Please Select Mesh Object!')
 
         mesh = bpy.data.meshes.new("Stair")
         obj = bpy.data.objects.new("Stair", mesh)
         mesh.from_pydata(self.verts, [], self.faces)
         addObject(obj)
-        self.assignMaterial(obj, wallMesh)
+        self.assignMaterial(obj, wallMesh, pileMesh)
 
         # assign uv
         for i, face in enumerate(obj.data.polygons):
@@ -377,11 +431,13 @@ class vic_procedural_stair(bpy.types.Operator):
         row.prop(self, 'count')
         row.prop(self, 'stepDepth')
 
+        box = layout.box()
         box.label(text='Wall Mesh')
         row = box.row()
         row.prop(self, 'showWall')
-        row.prop(self, 'editMode')
+        #row.prop(self, 'editMode')
         box.prop_search(self, "wallMesh", bpy.data, "objects")
+        box.prop_search(self, "pileMesh", bpy.data, "objects")
         #row.prop(self, "wallMesh")
         row = box.row()
         row.prop(self, 'wallHeight')
