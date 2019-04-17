@@ -25,7 +25,6 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
         col.operator(MeshFlatten.vic_make_meshs_plane.bl_idname)
         col.operator(ParticleToRigidbody.ParticlesToRigidbodys.bl_idname)
         col.operator(ProceduralStair.vic_procedural_stair.bl_idname)
-        #col.operator(ProceduralStair.vic_procedural_stair_save.bl_idname)
         
         row = col.row(align=True)
         row.prop(context.scene.action_properties, 'string_select_name' )
@@ -48,7 +47,6 @@ classes = (
     HandDrag.vic_healing_all_effect_objects,
     ParticleToRigidbody.ParticlesToRigidbodys,
     MeshFlatten.vic_make_meshs_plane,
-    #ProceduralStair.vic_procedural_stair_save,
     ProceduralStair.vic_procedural_stair
 )
 def register():

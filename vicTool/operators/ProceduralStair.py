@@ -32,44 +32,9 @@ def focusObject(obj):
     obj.select_set(True)
     activeObject(obj)
 
-class vic_procedural_stair_save(bpy.types.Operator):
-    bl_idname = 'vic.vic_procedural_stair_save'
-    bl_label = 'Collapse Mesh'
-    bl_description = ''
-
-    data = StringProperty()
-
-    def execute(self, context):
-
-        # wallName = ''
-        # try:
-        #     wallName = bpy.context.scene['cwn']
-        #     #wallName = eval(self.data)[0]
-        # except:
-        #     print("not have myname")
-        
-        # print( 'select_name:', wallName )
-        # if wallName != '':
-        #     objs = []
-        #     for b in bpy.data.objects:
-        #         find_str = b.name.find( wallName )
-        #         print( 'find_str:', find_str )
-        #         b.select_set( False )
-        #         if find_str != -1:
-        #             b.hide_viewport = False
-        #             b.select_set( True )
-        #             objs.append(b)
-        #             print("add")
-        #     print( len(objs))
-        #     if len(objs) > 0:
-        #         activeObject(objs[0])
-        #         bpy.ops.object.join()
-
-        return {'FINISHED'}
-
 class vic_procedural_stair(bpy.types.Operator):
     bl_idname = 'vic.vic_procedural_stair'
-    bl_label = 'Create Stair'
+    bl_label = 'Stair Generator'
     bl_description = ''
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -150,13 +115,13 @@ class vic_procedural_stair(bpy.types.Operator):
 
     editMode:BoolProperty(
         name='Edit Mode',
-        default=False,
-        description='Turn off and press [Create Stair] again to get result mesh!'
+        default=True,
+        description='Turn off this will combine all mesh to one'
     )
 
     wallMesh:StringProperty(
-        name='Pick Mesh',
-        description='DO NOT Pick Self!',
+        name='Pick',
+        description='',
         default=''
     )
 
@@ -316,8 +281,6 @@ class vic_procedural_stair(bpy.types.Operator):
             bpy.data.objects.remove(wallPrototype, do_unlink=True)
 
     def execute(self, context):
-        return {'FINISHED'}
-
         self.verts = []
         self.faces = []
         self.uvsMap = {}
@@ -414,6 +377,17 @@ class vic_procedural_stair(bpy.types.Operator):
         row.prop(self, 'count')
         row.prop(self, 'stepDepth')
 
+        box.label(text='Wall Mesh')
+        row = box.row()
+        row.prop(self, 'showWall')
+        row.prop(self, 'editMode')
+        box.prop_search(self, "wallMesh", bpy.data, "objects")
+        #row.prop(self, "wallMesh")
+        row = box.row()
+        row.prop(self, 'wallHeight')
+        row.prop(self, 'wallOffsetY')
+
+        box = layout.box()
         box.label(text='Stair Material')
         row = box.row()
         box.prop(self, 'stairUvStep')
@@ -423,16 +397,4 @@ class vic_procedural_stair(bpy.types.Operator):
         box.prop_search(self, "stairMaterial", bpy.data, "materials")
         box.prop_search(self, "stairSideMaterial", bpy.data, "materials")
 
-        box = layout.box()
-        box.label(text='Wall Mesh')
-        row = box.row()
-        row.prop(self, 'showWall')
-        #row.prop(self, 'editMode')
-        row.prop_search(self, "wallMesh", scene, "objects")
         
-        row = box.row()
-        row.prop(self, 'wallHeight')
-        row.prop(self, 'wallOffsetY')
-        
-        box = layout.box()
-        box.label(text='Pile')
