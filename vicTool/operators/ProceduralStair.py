@@ -52,7 +52,6 @@ class vic_procedural_stair(bpy.types.Operator):
 
     wallHeight:FloatProperty(
         name='Wall Height',
-        min=0.0,
         default=0.0
     )
 
