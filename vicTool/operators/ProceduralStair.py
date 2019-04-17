@@ -186,9 +186,9 @@ class vic_procedural_stair(bpy.types.Operator):
 
     # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
     # 用兩條綫上的點來產生面
-    def addVertexAndFaces(self, line, offset, matId, verts, faces, matIds, flip = False, close = False):
+    def addVertexAndFaces(self, line, offset, uvLine, uvoffset, matId, flip = False, close = False):
         anotherLine = []
-        startId = len(verts)
+        startId = len(self.verts)
         for i, v in enumerate(line):
             offsetVert = (  v[0] + offset[0],
                             v[1] + offset[1],
@@ -208,16 +208,26 @@ class vic_procedural_stair(bpy.types.Operator):
                         f = (v1,startId,startId+len(line),v2)
                     else:
                         f = (v1,v2,startId+len(line),startId)
+                else:
+                    print("last point, not need to create face")
+                    continue
             else:
                 if flip:
                     f = (v1, v4, v3, v2)
                 else:
                     f = (v1, v2, v3, v4)
-            faces.append(f)
-            matIds.append(matId)
+            
+            currentFaceId = len(self.faces)
+            self.uvsMap['%i_%i' % (currentFaceId, f[0])] = uvLine[i]
+            self.uvsMap['%i_%i' % (currentFaceId, f[1])] = uvLine[i+1]
+            self.uvsMap['%i_%i' % (currentFaceId, f[2])] = (uvLine[i+1][0]+uvoffset[0],uvLine[i+1][1]+uvoffset[1])
+            self.uvsMap['%i_%i' % (currentFaceId, f[3])] = (uvLine[i][0]+uvoffset[0],uvLine[i][1]+uvoffset[1])
+
+            self.faces.append(f)
+            self.matIds.append(matId)
 
         line.extend(anotherLine)
-        verts.extend(line)
+        self.verts.extend(line)
 
     def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
 
@@ -365,27 +375,38 @@ class vic_procedural_stair(bpy.types.Operator):
 
         lastVertex = line[len(line)-1]
 
-        # # 階梯的點及uv
-        # self.addVertexAndFaces(line, (0, self.width, 0), 0, self.verts, self.faces, self.matIds, flip=True)
-        # self.addUV(uv, (self.stairUvScaleX,0), self.uvs)
+        # 階梯的點及uv
+        self.addVertexAndFaces(
+            line, (0, self.width, 0), 
+            uv, (self.stairUvScaleX,0), 
+            0, flip=True)
+        #self.addUV(uv, (self.stairUvScaleX,0), self.uvs)
 
-        # # 背面的點及uv
-        # self.addVertexAndFaces([lastVertex, (lastVertex[0],lastVertex[1],0)], (0, self.width, 0), 1, self.verts, self.faces, self.matIds, flip=True)
-        # self.addUV([(0,lastVertex[2]),(0,0)], (self.width,0), self.uvs, self.stairSideUvScale)
+        # 背面的點及uv
+        self.addVertexAndFaces(
+            [lastVertex, (lastVertex[0],lastVertex[1],0)], (0, self.width, 0), 
+            [(0,lastVertex[2]),(0,0)], (self.width,0),
+            1, flip=True)
+        #self.addUV([(0,lastVertex[2]),(0,0)], (self.width,0), self.uvs, self.stairSideUvScale)
 
-        # for i in range(self.count):
-        #     self.addVertexAndFaces([
-        #         (i*stepDepth,-x, i*stepHeight+stepHeight),
-        #         (i*stepDepth,-x,0),
-        #         (i*stepDepth,x,0),
-        #         (i*stepDepth,x,i*stepHeight+stepHeight)
-        #         ], (stepDepth, 0, 0), 1, self.verts, self.faces, self.matIds, flip=True)
-        #     self.addUV([
-        #         (i*stepDepth,i*stepHeight+stepHeight),
-        #         (i*stepDepth,0),
-        #         (i*stepDepth,0),
-        #         (i*stepDepth,i*stepHeight+stepHeight)
-        #     ], (stepDepth,0), self.uvs, self.stairSideUvScale)
+        for i in range(self.count):
+            self.addVertexAndFaces([
+                (i*stepDepth,-x, i*stepHeight+stepHeight),
+                (i*stepDepth,-x,0),
+                (i*stepDepth,x,0),
+                (i*stepDepth,x,i*stepHeight+stepHeight)
+                ], (stepDepth, 0, 0),[
+                (i*stepDepth,i*stepHeight+stepHeight),
+                (i*stepDepth,0),
+                (i*stepDepth,0),
+                (i*stepDepth,i*stepHeight+stepHeight)
+                ], (stepDepth,0), 1, flip=True)
+            # self.addUV([
+            #     (i*stepDepth,i*stepHeight+stepHeight),
+            #     (i*stepDepth,0),
+            #     (i*stepDepth,0),
+            #     (i*stepDepth,i*stepHeight+stepHeight)
+            # ], (stepDepth,0), self.uvs, self.stairSideUvScale)
         
         # check the name of object in the scene! if not, set value to empty
         try:
