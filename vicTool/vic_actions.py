@@ -1,11 +1,16 @@
 import bpy
-from .operators import CreateCameraTarget
-from .operators import MirrorCubeAdd
-from .operators import SelectByName
-from .operators import HandDrag
-from .operators import ParticleToRigidbody
-from .operators import MeshFlatten
-from .operators import ProceduralStair
+
+from .operators import (
+    CreateCameraTarget,
+    MirrorCubeAdd,
+    SelectByName,
+    HandDrag,
+    ParticleToRigidbody,
+    MeshFlatten,
+    ProceduralStair,
+    ProceduralBridge
+)
+
 
 class ActionProperties(bpy.types.PropertyGroup):
     string_select_name:bpy.props.StringProperty( name="", description="Name of select objects", default="")    
@@ -24,12 +29,15 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
         col.operator(CreateCameraTarget.vic_create_camera_target.bl_idname)
         col.operator(MeshFlatten.vic_make_meshs_plane.bl_idname)
         col.operator(ParticleToRigidbody.ParticlesToRigidbodys.bl_idname)
-        col.operator(ProceduralStair.vic_procedural_stair.bl_idname)
         
         row = col.row(align=True)
         row.prop(context.scene.action_properties, 'string_select_name' )
         row.operator(SelectByName.vic_select_by_name.bl_idname)
-        
+
+        col.label(text='Generator')
+        col.operator(ProceduralStair.vic_procedural_stair.bl_idname)
+        col.operator(ProceduralBridge.vic_procedural_bridge.bl_idname)
+
         col.label(text='Drag Effect')
         col.operator(HandDrag.vic_hand_drag.bl_idname)
         col.operator(HandDrag.vic_healing_all_effect_objects.bl_idname)
@@ -47,7 +55,8 @@ classes = (
     HandDrag.vic_healing_all_effect_objects,
     ParticleToRigidbody.ParticlesToRigidbodys,
     MeshFlatten.vic_make_meshs_plane,
-    ProceduralStair.vic_procedural_stair
+    ProceduralStair.vic_procedural_stair,
+    ProceduralBridge.vic_procedural_bridge
 )
 def register():
     for cls in classes: bpy.utils.register_class(cls)

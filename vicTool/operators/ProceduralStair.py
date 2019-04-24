@@ -11,26 +11,12 @@ from bpy.props import (
         StringProperty,
         PointerProperty
         )
-
-def addObject( obj ):
-    bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)
-
-def activeObject( obj ):
-    bpy.context.view_layer.objects.active = obj
-
-def copyObject(obj, sameData = False):
-    newobj = obj.copy()
-    if not sameData:
-        newobj.data = obj.data.copy()
-        newobj.animation_data_clear()
-    return newobj
-
-def focusObject(obj):
-    # unselect all of object, and then can join my own object
-    for obj in bpy.context.view_layer.objects:
-        obj.select_set(False)
-    obj.select_set(True)
-    activeObject(obj)
+from ..vic_tools import (
+    addObject,
+    activeObject,
+    copyObject,
+    focusObject
+)
 
 class vic_procedural_stair(bpy.types.Operator):
     bl_idname = 'vic.vic_procedural_stair'
