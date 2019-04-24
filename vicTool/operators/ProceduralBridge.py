@@ -80,8 +80,6 @@ class vic_procedural_bridge(bpy.types.Operator):
     def execute(self, context):
         # parameters
 
-        print(self.styleSet)
-
         if self.baseMesh not in bpy.context.view_layer.objects:
             return {'FINISHED'}
         if self.stepMesh not in bpy.context.view_layer.objects:
@@ -99,19 +97,9 @@ class vic_procedural_bridge(bpy.types.Operator):
         useLength = allLength / count
         xDir = Vector((1,0,0))
 
-        
-        # 正常來説應該用這裏的方式。但是他在特定情況下不會更新matrix_world，所以改爲以下的方式
-        # base = copyToScene(prefab_base)
-        # base.location.x = allLength/2
-        # base.location.y = 0
-        # base.location.z = 0
-        # bpy.context.scene.update()
-
-        # 强制修改matrix_world
         base = copyToScene(prefab_base)
-        base.matrix_world.row[0][3] = allLength/2
-        base.matrix_world.row[1][3] = 0
-        base.matrix_world.row[2][3] = 0
+        # 强制修改matrix_world
+        base.matrix_world = Matrix.Translation(Vector((allLength/2,0,0)))
 
         pts = []
         for i in range( count + 1 ):    
@@ -139,17 +127,15 @@ class vic_procedural_bridge(bpy.types.Operator):
             scaleX = diff.length / stepLength
             
             stepObj = copyToScene(prefab_step)
-            # stepObj.location = first + diff / 2
-            # stepObj.rotation_euler.y = -radian
-            # stepObj.scale.x = scaleX
-
             # 强制修改matrix_world
             matT = Matrix.Translation(first + diff / 2)
             matR = Matrix.Rotation(-radian, 4, Vector((0,1,0)))
             matS = Matrix.Scale(scaleX, 4, Vector((1,0,0)))
             stepObj.matrix_world = matT @ matR @ matS
             joinList.append( stepObj )
+            
             self.transformBridge(base, first, second )
+            
 
         joinObj(joinList, joinList[0])
         return {'FINISHED'}
