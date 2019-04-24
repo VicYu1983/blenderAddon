@@ -1,5 +1,12 @@
 import bpy
 
+def joinObj( joinList, target ):
+    focusObject(target)
+    for obj in joinList:
+        obj.select_set(True)
+    bpy.ops.object.join()
+    bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
+
 def copyToScene( prefab ):
     obj = prefab.copy()
     obj.data = prefab.data.copy()

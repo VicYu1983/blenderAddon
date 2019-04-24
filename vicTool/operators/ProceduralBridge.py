@@ -1,6 +1,6 @@
 import bpy, time
 from math import *
-from mathutils import Vector
+from mathutils import *
 from bpy.props import (
         BoolProperty,
         EnumProperty,
@@ -12,6 +12,11 @@ from bpy.props import (
         PointerProperty
         )
 from ..vic_tools import *
+
+styleSetList = [
+    ('0','Normal', 'Normal'),
+    ('1','Sin', 'Sin')
+]
 
 class vic_procedural_bridge(bpy.types.Operator):
     bl_idname = 'vic.vic_procedural_bridge'
@@ -25,6 +30,31 @@ class vic_procedural_bridge(bpy.types.Operator):
         default=''
     )
 
+    stepMesh:StringProperty(
+        name='Pick Step',
+        description='',
+        default=''
+    )
+
+    bridgeHeight:FloatProperty(
+        name='Height',
+        min=1,
+        default=4
+    )
+
+    bridgePow:FloatProperty(
+        name='Curve',
+        min=.1,
+        default=2
+    )
+
+    styleSet: EnumProperty(
+        name='Style',
+        description='',
+        items=styleSetList,
+        default='0'
+    )
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -32,6 +62,10 @@ class vic_procedural_bridge(bpy.types.Operator):
         box = layout.box()
         box.label(text='Base Mesh')
         box.prop_search(self, "baseMesh", bpy.data, "objects")
+        box.prop_search(self, "stepMesh", bpy.data, "objects")
+        box.prop(self, 'bridgeHeight')
+        box.prop(self, 'bridgePow')
+        box.prop(self, 'styleSet')
 
     def transformBridge( self, obj, min, max ):
         localMin = obj.matrix_world.inverted() @ min
@@ -46,14 +80,18 @@ class vic_procedural_bridge(bpy.types.Operator):
     def execute(self, context):
         # parameters
 
+        print(self.styleSet)
+
         if self.baseMesh not in bpy.context.view_layer.objects:
             return {'FINISHED'}
+        if self.stepMesh not in bpy.context.view_layer.objects:
+            return {'FINISHED'}
 
-        prefab_step = bpy.data.objects['Cube']
+        prefab_step = bpy.context.view_layer.objects[self.stepMesh]
         prefab_base = bpy.context.view_layer.objects[self.baseMesh]
         allLength = prefab_base.dimensions.x + .5
-        height = 10
-        powFactor = 2
+        height = self.bridgeHeight
+        powFactor = self.bridgePow
 
         stepLength = prefab_step.dimensions.x
         count = round(allLength / stepLength)
@@ -61,6 +99,7 @@ class vic_procedural_bridge(bpy.types.Operator):
         useLength = allLength / count
         xDir = Vector((1,0,0))
 
+        
         # 正常來説應該用這裏的方式。但是他在特定情況下不會更新matrix_world，所以改爲以下的方式
         # base = copyToScene(prefab_base)
         # base.location.x = allLength/2
@@ -77,31 +116,40 @@ class vic_procedural_bridge(bpy.types.Operator):
         pts = []
         for i in range( count + 1 ):    
             x = useLength * i
-            z = 1 - pow(abs(i-halfCount) / halfCount, powFactor)
-            z = sin(x/allLength * pi * 2 - pi / 2)
+            if self.styleSet == styleSetList[0][0]:
+                z = 1 - pow(abs(i-halfCount) / halfCount, powFactor)
+            elif self.styleSet == styleSetList[1][0]:
+                z = sin(x/allLength * pi * 2 - pi / 2)
+                # sin值域-1~1，轉爲0~1
+                z = (z+1)/2
+            else:
+                z = 0
             pts.append(Vector((x, 0, z * height)))
 
+        joinList = []
         for i, p in enumerate(pts):
             if i == len(pts)-1:
-                print('last')
                 break
             first = p
             second = pts[i+1]
             diff = second - first
             dir = diff.normalized()
-            
-            # no navigate
-            # radian = dir.angle(xDir)
+
             radian = atan2(dir.z, dir.x)
             scaleX = diff.length / stepLength
             
             stepObj = copyToScene(prefab_step)
-            stepObj.location = first + diff / 2
-            stepObj.rotation_euler.y = -radian
-            stepObj.scale.x = scaleX
-            
+            # stepObj.location = first + diff / 2
+            # stepObj.rotation_euler.y = -radian
+            # stepObj.scale.x = scaleX
+
+            # 强制修改matrix_world
+            matT = Matrix.Translation(first + diff / 2)
+            matR = Matrix.Rotation(-radian, 4, Vector((0,1,0)))
+            matS = Matrix.Scale(scaleX, 4, Vector((1,0,0)))
+            stepObj.matrix_world = matT @ matR @ matS
+            joinList.append( stepObj )
             self.transformBridge(base, first, second )
-        #for v in base.data.vertices:
-        #    print( v.co )
-            
+
+        joinObj(joinList, joinList[0])
         return {'FINISHED'}
