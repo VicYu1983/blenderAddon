@@ -27,13 +27,25 @@ class vic_procedural_bridge(bpy.types.Operator):
     baseMesh:StringProperty(
         name='Pick Base',
         description='',
-        default=''
+        default='Base'
     )
 
     stepMesh:StringProperty(
         name='Pick Step',
         description='',
-        default=''
+        default='Step'
+    )
+
+    wallMesh:StringProperty(
+        name='Pick Wall',
+        description='',
+        default='Wall'
+    )
+
+    pileMesh:StringProperty(
+        name='Pick Pile',
+        description='',
+        default='Pile'
     )
 
     bridgeLength:FloatProperty(
@@ -66,6 +78,22 @@ class vic_procedural_bridge(bpy.types.Operator):
         default=.1
     )
 
+    wallHeight:FloatProperty(
+        name='Wall Height',
+        default=1
+    )
+
+    wallInset:FloatProperty(
+        name='Wall Inset',
+        default=1,
+    )
+
+    pileCount:IntProperty(
+        name='Pile Count',
+        min=2,
+        default=10
+    )
+
     styleSet: EnumProperty(
         name='Style',
         description='',
@@ -81,14 +109,19 @@ class vic_procedural_bridge(bpy.types.Operator):
         box.label(text='Base Mesh')
         box.prop_search(self, "baseMesh", bpy.data, "objects")
         box.prop_search(self, "stepMesh", bpy.data, "objects")
+        box.prop_search(self, "wallMesh", bpy.data, "objects")
+        box.prop_search(self, "pileMesh", bpy.data, "objects")
         box.prop(self, 'bridgeWidth')
         box.prop(self, 'bridgeLength')
         box.prop(self, 'bridgeHeight')
         box.prop(self, 'bridgePow')
         box.prop(self, 'stepHeight')
+        box.prop(self, 'wallHeight')
+        box.prop(self, 'wallInset')
+        box.prop(self, 'pileCount')
         box.prop(self, 'styleSet')
 
-    def transformBridge( self, obj, min, max ):
+    def transformBridge( self, obj, min, max, offsetZ = 0 ):
         localMin = obj.matrix_world.inverted() @ min
         localMax = obj.matrix_world.inverted() @ max
         height = localMax.z - localMin.z
@@ -96,49 +129,97 @@ class vic_procedural_bridge(bpy.types.Operator):
         for v in obj.data.vertices:
             if v.co.x >= localMin.x and v.co.x < localMax.x:
                 percentX = (v.co.x - localMin.x)/width
-                v.co.z += percentX * height + localMin.z
+                v.co.z += percentX * height + localMin.z + offsetZ
 
-    def execute(self, context):
-        # parameters
-
-        if self.baseMesh not in bpy.context.view_layer.objects or bpy.context.view_layer.objects[self.baseMesh].type != 'MESH':
-            return {'FINISHED'}
-        if self.stepMesh not in bpy.context.view_layer.objects or bpy.context.view_layer.objects[self.stepMesh].type != 'MESH':
-            return {'FINISHED'}
-
-        prefab_step = bpy.context.view_layer.objects[self.stepMesh]
-        prefab_base = bpy.context.view_layer.objects[self.baseMesh]
-        widthScale = self.bridgeWidth / prefab_base.dimensions.y
-        lengthScale = self.bridgeLength / prefab_base.dimensions.x 
-        allLength = prefab_base.dimensions.x * lengthScale + .5
-        height = self.bridgeHeight
-        powFactor = self.bridgePow
-
-        stepLength = prefab_step.dimensions.x
-        count = round(allLength / stepLength)
+    def getCurveLocation(self, count, allLength):
         halfCount = count / 2
         useLength = allLength / count
-        xDir = Vector((1,0,0))
-
-        base = copyToScene(prefab_base)
-        scaleObjVertex(base, (lengthScale, widthScale, 1))
-        # 强制修改matrix_world
-        base.matrix_world = Matrix.Translation(Vector((allLength/2,0,0)))
-
         pts = []
         for i in range( count + 1 ):    
             x = useLength * i
             if self.styleSet == styleSetList[0][0]:
-                z = 1 - pow(abs(i-halfCount) / halfCount, powFactor)
+                z = 1 - pow(abs(i-halfCount) / halfCount, self.bridgePow )
             elif self.styleSet == styleSetList[1][0]:
                 z = sin(x/allLength * pi * 2 - pi / 2)
                 # sin值域-1~1，轉爲0~1
                 z = (z+1)/2
             else:
                 z = 0
-            pts.append(Vector((x, 0, z * height)))
+            pts.append(Vector((x, 0, z * self.bridgeHeight)))
+        return pts
+
+    def execute(self, context):
+        if self.baseMesh not in bpy.context.view_layer.objects or bpy.context.view_layer.objects[self.baseMesh].type != 'MESH':
+            return {'FINISHED'}
+        if self.stepMesh not in bpy.context.view_layer.objects or bpy.context.view_layer.objects[self.stepMesh].type != 'MESH':
+            return {'FINISHED'}
+
+        if self.wallMesh in bpy.context.view_layer.objects and bpy.context.view_layer.objects[self.wallMesh].type == 'MESH':
+            prefab_wall = bpy.context.view_layer.objects[self.wallMesh]
+        else:
+            prefab_wall = None
+
+        if self.pileMesh in bpy.context.view_layer.objects and bpy.context.view_layer.objects[self.pileMesh].type == 'MESH':
+            prefab_pile = bpy.context.view_layer.objects[self.pileMesh]
+        else:
+            prefab_pile = None
+
+        prefab_base = bpy.context.view_layer.objects[self.baseMesh]
+        prefab_step = bpy.context.view_layer.objects[self.stepMesh]
+        widthScale = self.bridgeWidth / prefab_base.dimensions.y
+        lengthScale = self.bridgeLength / prefab_base.dimensions.x 
+        allLength = self.bridgeLength + .5
         
+        base = copyToScene(prefab_base)
+        scaleObjVertex(base, (lengthScale, widthScale, 1))
+        # 强制修改matrix_world
+        base.matrix_world = Matrix.Translation(Vector((allLength/2,0,0)))
+
+        wall = None
+        if prefab_wall != None:
+            stepLength = prefab_wall.dimensions.x
+            count = round(self.bridgeLength / stepLength)
+            usingLength = (self.bridgeLength / count)
+            scaleX = usingLength / stepLength
+            joinList = []
+            for i in range(count):
+                wallObj = copyToScene(prefab_wall)
+                matT = Matrix.Translation(Vector(((i+.5) * usingLength, self.bridgeWidth/2 - self.wallInset, 0)))
+                matS = Matrix.Scale(scaleX, 4, Vector((1,0,0)))
+                wallObj.matrix_world = matT @ matS
+                joinList.append(wallObj)
+
+                wallObj = copyToScene(prefab_wall)
+                matT = Matrix.Translation(Vector(((i+.5) * usingLength, -self.bridgeWidth/2 + self.wallInset, 0)))
+                wallObj.matrix_world = matT @ matS
+                joinList.append(wallObj)
+
+            joinObj(joinList, joinList[0])
+            wall = joinList[len(joinList)-1]
+            wall.matrix_world.row[0][3] = allLength/2
+            
+        pile = None
+        if prefab_pile != None:
+            pts = self.getCurveLocation(self.pileCount-1, self.bridgeLength)
+            joinList = []
+            for p in pts:
+                pileObj = copyToScene(prefab_pile)
+                pileObj.matrix_world = Matrix.Translation(Vector((p.x, self.bridgeWidth/2 - self.wallInset, p.z)))
+                joinList.append(pileObj)
+
+                pileObj = copyToScene(prefab_pile)
+                pileObj.matrix_world = Matrix.Translation(Vector((p.x, -self.bridgeWidth/2 + self.wallInset, p.z)))
+                joinList.append(pileObj)
+
+            joinObj(joinList, joinList[0])
+            pile = joinList[len(joinList)-1]
+            pile.matrix_world.row[0][3] = allLength/2
+
+        stepLength = prefab_step.dimensions.x
+        count = round(allLength / stepLength)
+        pts = self.getCurveLocation(count, allLength)
         widthScaleForStep = self.bridgeWidth / prefab_step.dimensions.y
+
         joinList = []
         for i, p in enumerate(pts):
             if i == len(pts)-1:
@@ -147,7 +228,6 @@ class vic_procedural_bridge(bpy.types.Operator):
             second = pts[i+1]
             diff = second - first
             dir = diff.normalized()
-
             radian = atan2(dir.z, dir.x)
             scaleX = diff.length / stepLength
             
@@ -161,6 +241,9 @@ class vic_procedural_bridge(bpy.types.Operator):
             joinList.append( stepObj )
             
             self.transformBridge(base, first, second )
+            if wall != None:
+                self.transformBridge(wall, first, second, self.wallHeight )
             
-        joinObj(joinList)
+        joinObj(joinList, joinList[0])
+        bpy.ops.object.select_all(action='DESELECT')
         return {'FINISHED'}

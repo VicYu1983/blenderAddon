@@ -7,8 +7,8 @@ def scaleObjVertex(obj, scale):
         v.co.y = v.co.y * scale[1]
         v.co.z = v.co.z * scale[2]
 
-def joinObj( joinList ):
-    focusObject(joinList[0])
+def joinObj( joinList, target ):
+    focusObject(target)
     for obj in joinList:
         obj.select_set(True)
     bpy.ops.object.join()
