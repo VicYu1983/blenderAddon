@@ -36,16 +36,34 @@ class vic_procedural_bridge(bpy.types.Operator):
         default=''
     )
 
+    bridgeLength:FloatProperty(
+        name='Length',
+        min=1,
+        default=100
+    )
+
     bridgeHeight:FloatProperty(
         name='Height',
-        min=1,
+        min=0,
         default=4
+    )
+
+    bridgeWidth:FloatProperty(
+        name='Width',
+        min=1,
+        default=10
     )
 
     bridgePow:FloatProperty(
         name='Curve',
         min=.1,
         default=2
+    )
+
+    stepHeight:FloatProperty(
+        name='Step Height',
+        min=0,
+        default=.1
     )
 
     styleSet: EnumProperty(
@@ -63,8 +81,11 @@ class vic_procedural_bridge(bpy.types.Operator):
         box.label(text='Base Mesh')
         box.prop_search(self, "baseMesh", bpy.data, "objects")
         box.prop_search(self, "stepMesh", bpy.data, "objects")
+        box.prop(self, 'bridgeWidth')
+        box.prop(self, 'bridgeLength')
         box.prop(self, 'bridgeHeight')
         box.prop(self, 'bridgePow')
+        box.prop(self, 'stepHeight')
         box.prop(self, 'styleSet')
 
     def transformBridge( self, obj, min, max ):
@@ -80,14 +101,16 @@ class vic_procedural_bridge(bpy.types.Operator):
     def execute(self, context):
         # parameters
 
-        if self.baseMesh not in bpy.context.view_layer.objects:
+        if self.baseMesh not in bpy.context.view_layer.objects or bpy.context.view_layer.objects[self.baseMesh].type != 'MESH':
             return {'FINISHED'}
-        if self.stepMesh not in bpy.context.view_layer.objects:
+        if self.stepMesh not in bpy.context.view_layer.objects or bpy.context.view_layer.objects[self.stepMesh].type != 'MESH':
             return {'FINISHED'}
 
         prefab_step = bpy.context.view_layer.objects[self.stepMesh]
         prefab_base = bpy.context.view_layer.objects[self.baseMesh]
-        allLength = prefab_base.dimensions.x + .5
+        widthScale = self.bridgeWidth / prefab_base.dimensions.y
+        lengthScale = self.bridgeLength / prefab_base.dimensions.x 
+        allLength = prefab_base.dimensions.x * lengthScale + .5
         height = self.bridgeHeight
         powFactor = self.bridgePow
 
@@ -98,6 +121,7 @@ class vic_procedural_bridge(bpy.types.Operator):
         xDir = Vector((1,0,0))
 
         base = copyToScene(prefab_base)
+        scaleObjVertex(base, (lengthScale, widthScale, 1))
         # 强制修改matrix_world
         base.matrix_world = Matrix.Translation(Vector((allLength/2,0,0)))
 
@@ -113,7 +137,8 @@ class vic_procedural_bridge(bpy.types.Operator):
             else:
                 z = 0
             pts.append(Vector((x, 0, z * height)))
-
+        
+        widthScaleForStep = self.bridgeWidth / prefab_step.dimensions.y
         joinList = []
         for i, p in enumerate(pts):
             if i == len(pts)-1:
@@ -128,14 +153,14 @@ class vic_procedural_bridge(bpy.types.Operator):
             
             stepObj = copyToScene(prefab_step)
             # 强制修改matrix_world
-            matT = Matrix.Translation(first + diff / 2)
+            matT = Matrix.Translation(first + diff / 2 + Vector((0,0,self.stepHeight)))
             matR = Matrix.Rotation(-radian, 4, Vector((0,1,0)))
             matS = Matrix.Scale(scaleX, 4, Vector((1,0,0)))
-            stepObj.matrix_world = matT @ matR @ matS
+            matS2 = Matrix.Scale(widthScaleForStep, 4, Vector((0,1,0)))
+            stepObj.matrix_world = matT @ matR @ matS @ matS2
             joinList.append( stepObj )
             
             self.transformBridge(base, first, second )
             
-
-        joinObj(joinList, joinList[0])
+        joinObj(joinList)
         return {'FINISHED'}

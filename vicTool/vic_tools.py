@@ -1,7 +1,14 @@
 import bpy
+from mathutils import *
 
-def joinObj( joinList, target ):
-    focusObject(target)
+def scaleObjVertex(obj, scale):
+    for v in obj.data.vertices:
+        v.co.x = v.co.x * scale[0]
+        v.co.y = v.co.y * scale[1]
+        v.co.z = v.co.z * scale[2]
+
+def joinObj( joinList ):
+    focusObject(joinList[0])
     for obj in joinList:
         obj.select_set(True)
     bpy.ops.object.join()
