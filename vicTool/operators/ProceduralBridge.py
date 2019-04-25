@@ -80,7 +80,7 @@ class vic_procedural_bridge(bpy.types.Operator):
 
     wallHeight:FloatProperty(
         name='Wall Height',
-        default=1
+        default=0
     )
 
     wallInset:FloatProperty(
@@ -124,17 +124,17 @@ class vic_procedural_bridge(bpy.types.Operator):
         box.prop(self, 'wallHeight')
         box.prop(self, 'wallInset')
         box.prop(self, 'pileCount')
-        
 
-    def transformBridge( self, obj, min, max, offsetZ = 0 ):
+    def transformMesh( self, obj, min, max, first, offsetZ = 0 ):
         localMin = obj.matrix_world.inverted() @ min
         localMax = obj.matrix_world.inverted() @ max
+        localFirst = obj.matrix_world.inverted() @ first
         height = localMax.z - localMin.z
         width = localMax.x - localMin.x
         for v in obj.data.vertices:
             if v.co.x >= localMin.x and v.co.x < localMax.x:
                 percentX = (v.co.x - localMin.x)/width
-                v.co.z += percentX * height + localMin.z + offsetZ
+                v.co.z += percentX * height + (localMin.z - localFirst.z) + offsetZ
 
     def getCurveLocation(self, count, allLength):
         halfCount = count / 2
@@ -179,8 +179,8 @@ class vic_procedural_bridge(bpy.types.Operator):
                 joinList.append(wallObj)
 
             joinObj(joinList, joinList[0])
-
             wall = joinList[len(joinList)-1]
+            wall.name = 'WallSet'
             wall.matrix_world.row[0][3] = allLength/2
         return wall
 
@@ -206,6 +206,7 @@ class vic_procedural_bridge(bpy.types.Operator):
             joinObj(joinList, joinList[0])
 
             pile = joinList[len(joinList)-1]
+            pile.name = 'PileSet'
             pile.matrix_world.row[0][3] = allLength/2
         return pile
 
@@ -235,11 +236,13 @@ class vic_procedural_bridge(bpy.types.Operator):
             stepObj.matrix_world = matT @ matR @ matS @ matS2
             joinList.append( stepObj )
             
-            self.transformBridge(base, first, second )
+            self.transformMesh(base, first, second, pts[0] )
             if wall != None:
-                self.transformBridge(wall, first, second, self.wallHeight )
+                self.transformMesh(wall, first, second, pts[0], self.wallHeight )
 
         joinObj(joinList, joinList[0])
+        step = joinList[len(joinList)-1]
+        step.name = 'StepSet'
         bpy.ops.object.select_all(action='DESELECT')
 
     def createBase(self, prefab_base, allLength):
