@@ -72,6 +72,16 @@ class vic_procedural_bridge(bpy.types.Operator):
         default=2
     )
 
+    stableBridge:BoolProperty(
+        name='Stable',
+        default=False
+    )
+
+    bridgeStableHeight:FloatProperty(
+        name='Stable Height',
+        default=-5
+    )
+
     stepHeight:FloatProperty(
         name='Step Height',
         min=0,
@@ -102,6 +112,11 @@ class vic_procedural_bridge(bpy.types.Operator):
         default='0'
     )
 
+    pilePerWall: BoolProperty(
+        name='Per Wall',
+        default=True
+    )
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -117,6 +132,10 @@ class vic_procedural_bridge(bpy.types.Operator):
         box.prop(self, 'stepHeight')
         box.prop(self, 'styleSet')
 
+        # row = box.row()
+        # row.prop(self, 'stableBridge')
+        # row.prop(self, 'bridgeStableHeight')
+
         box = layout.box()
         box.label(text='Wall & Pile')
         box.prop_search(self, "wallMesh", bpy.data, "objects")
@@ -124,17 +143,27 @@ class vic_procedural_bridge(bpy.types.Operator):
         box.prop(self, 'wallHeight')
         box.prop(self, 'wallInset')
         box.prop(self, 'pileCount')
+        box.prop(self, 'pilePerWall')
 
-    def transformMesh( self, obj, min, max, first, offsetZ = 0 ):
-        localMin = obj.matrix_world.inverted() @ min
-        localMax = obj.matrix_world.inverted() @ max
-        localFirst = obj.matrix_world.inverted() @ first
+    def transformMesh( self, obj, minpt, maxpt, firstpt, offsetZ = 0 ):
+        localMin = obj.matrix_world.inverted() @ minpt
+        localMax = obj.matrix_world.inverted() @ maxpt
+        localFirst = obj.matrix_world.inverted() @ firstpt
         height = localMax.z - localMin.z
         width = localMax.x - localMin.x
         for v in obj.data.vertices:
+            # effectFactor = 1
+            # if self.stableBridge:
+            #     if v.co.z < self.bridgeStableHeight:
+            #         effectFactor = 0
+            #     else:
+            #         effectFactor = (v.co.z - self.bridgeStableHeight) / abs(self.bridgeStableHeight)
+            #         effectFactor = min(1, effectFactor)
+                    
             if v.co.x >= localMin.x and v.co.x < localMax.x:
                 percentX = (v.co.x - localMin.x)/width
-                v.co.z += percentX * height + (localMin.z - localFirst.z) + offsetZ
+                v.co.z += (percentX * height + (localMin.z - localFirst.z) + offsetZ)
+                # v.co.z += (percentX * height + (localMin.z - localFirst.z) + offsetZ) * effectFactor
 
     def getCurveLocation(self, count, allLength):
         halfCount = count / 2
@@ -154,10 +183,9 @@ class vic_procedural_bridge(bpy.types.Operator):
         return pts
 
     def createWall(self, allLength):
+        prefab_wall = None
         if self.wallMesh in bpy.context.view_layer.objects and bpy.context.view_layer.objects[self.wallMesh].type == 'MESH':
             prefab_wall = bpy.context.view_layer.objects[self.wallMesh]
-        else:
-            prefab_wall = None
 
         wall = None
         if prefab_wall != None:
@@ -166,6 +194,7 @@ class vic_procedural_bridge(bpy.types.Operator):
             usingLength = (self.bridgeLength / count)
             scaleX = usingLength / stepLength
             joinList = []
+            joinList2 = []
             for i in range(count):
                 wallObj = copyToScene(prefab_wall)
                 matT = Matrix.Translation(Vector(((i+.5) * usingLength, self.bridgeWidth/2 - self.wallInset, 0)))
@@ -179,34 +208,39 @@ class vic_procedural_bridge(bpy.types.Operator):
                 joinList.append(wallObj)
 
             joinObj(joinList, joinList[0])
-            wall = joinList[len(joinList)-1]
-            wall.name = 'WallSet'
+            wall = joinList[0]
             wall.matrix_world.row[0][3] = allLength/2
         return wall
 
     def createPile(self, allLength):
+        prefab_pile = None
         if self.pileMesh in bpy.context.view_layer.objects and bpy.context.view_layer.objects[self.pileMesh].type == 'MESH':
             prefab_pile = bpy.context.view_layer.objects[self.pileMesh]
-        else:
-            prefab_pile = None
+
+        prefab_wall = None
+        if self.wallMesh in bpy.context.view_layer.objects and bpy.context.view_layer.objects[self.wallMesh].type == 'MESH':
+            prefab_wall = bpy.context.view_layer.objects[self.wallMesh]
 
         pile = None
         if prefab_pile != None:
-            pts = self.getCurveLocation(self.pileCount-1, self.bridgeLength)
+            count = self.pileCount-1
+            if self.pilePerWall and prefab_wall != None:
+                stepLength = prefab_wall.dimensions.x
+                count = round(self.bridgeLength / stepLength)
+
+            pts = self.getCurveLocation(count, self.bridgeLength)
             joinList = []
             for p in pts:
                 pileObj = copyToScene(prefab_pile)
-                pileObj.matrix_world = Matrix.Translation(Vector((p.x, self.bridgeWidth/2 - self.wallInset, p.z)))
+                pileObj.matrix_world = Matrix.Translation(Vector((p.x, self.bridgeWidth/2 - self.wallInset, p.z + self.wallHeight)))
                 joinList.append(pileObj)
 
                 pileObj = copyToScene(prefab_pile)
-                pileObj.matrix_world = Matrix.Translation(Vector((p.x, -self.bridgeWidth/2 + self.wallInset, p.z)))
+                pileObj.matrix_world = Matrix.Translation(Vector((p.x, -self.bridgeWidth/2 + self.wallInset, p.z + self.wallHeight)))
                 joinList.append(pileObj)
 
             joinObj(joinList, joinList[0])
-
-            pile = joinList[len(joinList)-1]
-            pile.name = 'PileSet'
+            pile = joinList[0]
             pile.matrix_world.row[0][3] = allLength/2
         return pile
 
@@ -241,9 +275,8 @@ class vic_procedural_bridge(bpy.types.Operator):
                 self.transformMesh(wall, first, second, pts[0], self.wallHeight )
 
         joinObj(joinList, joinList[0])
-        step = joinList[len(joinList)-1]
-        step.name = 'StepSet'
-        bpy.ops.object.select_all(action='DESELECT')
+        step = joinList[0]
+        return step
 
     def createBase(self, prefab_base, allLength):
         widthScale = self.bridgeWidth / prefab_base.dimensions.y
@@ -266,6 +299,10 @@ class vic_procedural_bridge(bpy.types.Operator):
         base = self.createBase(prefab_base, allLength)
         wall = self.createWall(allLength)
         pile = self.createPile(allLength)
-        self.createStep(prefab_step, allLength, base, wall)
+        step = self.createStep(prefab_step, allLength, base, wall)
 
+        joinList = filter(lambda obj: obj != None, [base, wall, pile, step])
+        joinObj(joinList, base)
+        base.name = 'ProcedrualBridge'
+        
         return {'FINISHED'}

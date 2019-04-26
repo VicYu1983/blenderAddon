@@ -14,14 +14,14 @@ def joinObj( joinList, target ):
     bpy.ops.object.join()
     bpy.ops.object.origin_set(type='ORIGIN_CENTER_OF_MASS', center='MEDIAN')
 
-def copyToScene( prefab ):
-    obj = prefab.copy()
-    obj.data = prefab.data.copy()
-    bpy.context.collection.objects.link(obj)
+def copyToScene( prefab, sameData = False ):
+    obj = copyObject(prefab, sameData)
+    addObject(obj)
     return obj
 
 def addObject( obj ):
-    bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)
+    #bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)
+    bpy.context.collection.objects.link(obj)
 
 def activeObject( obj ):
     bpy.context.view_layer.objects.active = obj
@@ -33,9 +33,9 @@ def copyObject(obj, sameData = False):
         newobj.animation_data_clear()
     return newobj
 
-def focusObject(obj):
+def focusObject(focusObj):
     # unselect all of object, and then can join my own object
-    for obj in bpy.context.view_layer.objects:
+    for obj in bpy.data.objects:
         obj.select_set(False)
-    obj.select_set(True)
-    activeObject(obj)
+    focusObj.select_set(True)
+    activeObject(focusObj)
