@@ -139,7 +139,7 @@ def mapToBone( f, start_frame, body, root, root_bone, bones, pts ):
             b.keyframe_insert(data_path="rotation_quaternion" ,frame=f)       
 
         # this update is very important, blender will update matrix with this function call, if not call will occur strange performance
-        bpy.context.scene.update() 
+        bpy.context.scene.update_tag()
     
     # another method, using quaternion
     '''
