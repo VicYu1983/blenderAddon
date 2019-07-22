@@ -8,7 +8,8 @@ from .operators import (
     ParticleToRigidbody,
     MeshFlatten,
     ProceduralStair,
-    ProceduralBridge
+    ProceduralBridge,
+    LineAlign
 )
 
 
@@ -42,6 +43,9 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
         col.operator(HandDrag.vic_hand_drag.bl_idname)
         col.operator(HandDrag.vic_healing_all_effect_objects.bl_idname)
 
+        col.label(text='Align')
+        col.operator(LineAlign.vic_line_align.bl_idname)
+
 classes = (
     # ui
     ActionProperties,
@@ -56,7 +60,8 @@ classes = (
     ParticleToRigidbody.ParticlesToRigidbodys,
     MeshFlatten.vic_make_meshs_plane,
     ProceduralStair.vic_procedural_stair,
-    ProceduralBridge.vic_procedural_bridge
+    ProceduralBridge.vic_procedural_bridge,
+    LineAlign.vic_line_align
 )
 def register():
     for cls in classes: bpy.utils.register_class(cls)
