@@ -2,7 +2,7 @@ bl_info = {
     "name": "Vic Tools",
     "author": "Vic",
     "version": (0, 1),
-    "blender": (2, 80, 0),
+    "blender": (2, 82, 0),
     "location": "3D View",
     "description": "",
     "warning": "",

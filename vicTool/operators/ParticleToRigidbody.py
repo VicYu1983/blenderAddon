@@ -7,7 +7,7 @@ class ParticlesToRigidbodys(bpy.types.Operator):
     
     def setting(self, emitter ):
         self.emitter = emitter
-        eval_ob = bpy.context.depsgraph.objects.get(self.emitter.name, None)
+        eval_ob = bpy.context.evaluated_depsgraph_get().objects.get(self.emitter.name, None)
         self.ps = eval_ob.particle_systems[0]
         self.ps_set = self.ps.settings
         self.ps_set.use_rotation_instance = True
