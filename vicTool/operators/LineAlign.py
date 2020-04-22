@@ -3,12 +3,13 @@ import bpy
 class vic_line_align(bpy.types.Operator):
     bl_idname = 'vic.vic_line_align'
     bl_label = 'Line Align'
-    bl_description = ''
+    bl_description = 'Line Align'
 
     def execute(self, context):
 
         selectList = bpy.context.selected_objects
         count = len( selectList )
+        if count < 2:   return {'FINISHED'}
         distance = 0
         startObj = None
         endObj = None
