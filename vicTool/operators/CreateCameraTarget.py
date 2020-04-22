@@ -24,6 +24,7 @@ class vic_create_camera_target(bpy.types.Operator):
     
     def execute(self, context):
         currobj = context.object
+        if currobj == None: return {'FINISHED'}
         cons = currobj.constraints
         for con in cons:
             if con.name == self.target_name:
