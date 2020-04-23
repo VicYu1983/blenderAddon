@@ -39,3 +39,7 @@ def focusObject(focusObj):
         obj.select_set(False)
     focusObj.select_set(True)
     activeObject(focusObj)
+
+def addProps( target, name, value, override = False ):
+    if not name in target or override:
+        target[name] = value

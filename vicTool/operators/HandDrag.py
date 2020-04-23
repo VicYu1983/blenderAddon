@@ -1,6 +1,7 @@
 import bpy
 from mathutils import Vector
 from mathutils import noise
+from ..vic_tools import addProps
 
 def collectVertexColor( mesh, color_layer ):
     ret = {}
@@ -23,17 +24,17 @@ def avg_col(cols):
         avg_col[2] += col[2]/len(cols)
     return avg_col    
 
-def addProps( target, name, value, override = False ):
-    if not name in target or override:
-        target.data[name] = value
+# def addProps( target, name, value, override = False ):
+#     if not name in target or override:
+#         target[name] = value
         
 def back_to_origin_vertex_position( target ):
     for i, v in enumerate( target.data.vertices, 0 ):
-        target.data.vertices[i].co = target.data['vic_init_vertex_position'][i]
-        to_proxy = target.matrix_world @ Vector( target.data['vic_init_vertex_position'][i] )
-        target.data['vic_proxy_vertex_position'][i][0] = to_proxy.x
-        target.data['vic_proxy_vertex_position'][i][1] = to_proxy.y
-        target.data['vic_proxy_vertex_position'][i][2] = to_proxy.z
+        target.data.vertices[i].co = target['vic_init_vertex_position'][i]
+        to_proxy = target.matrix_world @ Vector( target['vic_init_vertex_position'][i] )
+        target['vic_proxy_vertex_position'][i][0] = to_proxy.x
+        target['vic_proxy_vertex_position'][i][1] = to_proxy.y
+        target['vic_proxy_vertex_position'][i][2] = to_proxy.z
         
 def save_vertex_position( target ):
     # active when 1, or close by 0
@@ -47,8 +48,8 @@ def save_vertex_position( target ):
     # using vertex color for effective value
     addProps( target, 'vic_effective_by_vertex_color', 'Col' )
     
-    detail = target.data['vic_detail']
-    map_vertex_color = target.data['vic_effective_by_vertex_color'] 
+    detail = target['vic_detail']
+    map_vertex_color = target['vic_effective_by_vertex_color'] 
 
     addProps( target, 'vic_init_vertex_position', [ v.co.copy() for v in target.data.vertices ], True)
     addProps( target, 'vic_proxy_vertex_position', [ target.matrix_world @ v.co.copy() for v in target.data.vertices ], True )
@@ -59,22 +60,22 @@ def save_vertex_position( target ):
         addProps( target, 'vic_force_for_each_vertex_by_vertex_color', map_vertexs, True )            
     else:
         addProps( target, 'vic_force_for_each_vertex_by_vertex_color', [ .2 for v in target.data.vertices ], True )
-    addProps( target, 'vic_force_for_each_vertex', [ ((noise.noise(Vector(v)*detail)) + 1) / 2 for v in target.data['vic_init_vertex_position'] ], True )            
+    addProps( target, 'vic_force_for_each_vertex', [ ((noise.noise(Vector(v)*detail)) + 1) / 2 for v in target['vic_init_vertex_position'] ], True )            
     
 def move_vertice( target ):
     mat = target.matrix_world
     vs = target.data.vertices
     
     # check the object is not in the scene
-    if not 'vic_init_vertex_position' in target.data: return None
+    if not 'vic_init_vertex_position' in target: return None
 
-    active = target.data['vic_active']
+    active = target['vic_active']
     if active == 0: return None
 
-    init_pos = target.data['vic_init_vertex_position']
-    proxy_pos = target.data['vic_proxy_vertex_position']
-    force_pos = target.data['vic_force_for_each_vertex_by_vertex_color'] if target.data['vic_using_vertex_color_map'] else target.data['vic_force_for_each_vertex']
-    effective = target.data['vic_effective']
+    init_pos = target['vic_init_vertex_position']
+    proxy_pos = target['vic_proxy_vertex_position']
+    force_pos = target['vic_force_for_each_vertex_by_vertex_color'] if target['vic_using_vertex_color_map'] else target['vic_force_for_each_vertex']
+    effective = target['vic_effective']
 
     for i, v in enumerate(vs,0):
         toPos = mat @ Vector( init_pos[i] )
@@ -93,7 +94,7 @@ def filterCanEffect( objs ):
 def update( scene ):
     eff_objects = filterCanEffect( bpy.data.objects )
     for o in eff_objects:
-        if 'vic_active' in o.data:
+        if 'vic_active' in o:
             move_vertice( o )
 def addListener():
     #if update in bpy.app.handlers.frame_change_pre:
@@ -101,6 +102,7 @@ def addListener():
         bpy.app.handlers.frame_change_pre.remove( update )
     except:
         print( 'update handler is not in the list' )
+    bpy.app.handlers.frame_change_pre.clear()
     bpy.app.handlers.frame_change_pre.append( update ) 
 
 class vic_hand_drag(bpy.types.Operator):
