@@ -15,7 +15,9 @@ from ..vic_tools import (
     addObject,
     activeObject,
     copyObject,
-    focusObject
+    focusObject,
+    addVertexAndFaces,
+    prepareAndCreateMesh
 )
 
 class vic_procedural_stair(bpy.types.Operator):
@@ -130,63 +132,6 @@ class vic_procedural_stair(bpy.types.Operator):
     #     poll=scene_mychosenobject_poll
     # )
 
-    # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
-    # 用兩條綫上的點來產生面
-    def addVertexAndFaces(self, line, offset, uvLine, uvOffset, uvScale, matId, flip = False, close = False):
-        anotherLine = []
-        startId = len(self.verts)
-        for i, v in enumerate(line):
-            offsetVert = (  v[0] + offset[0],
-                            v[1] + offset[1],
-                            v[2] + offset[2])
-            anotherLine.append(offsetVert)
-
-            # 收集面id
-            v1 = startId+i
-            v2 = v1+len(line)
-            v3 = v2+1
-            v4 = v1+1
-
-            isLastFace = (i == len(line)-1)
-            if isLastFace:
-                if close:
-                    if flip:
-                        f = (v1,startId,startId+len(line),v2)
-                    else:
-                        f = (v1,v2,startId+len(line),startId)
-                else:
-                    # last point, not need to create face
-                    continue
-            else:
-                if flip:
-                    f = (v1, v4, v3, v2)
-                else:
-                    f = (v1, v2, v3, v4)
-            
-            currentFaceId = len(self.faces)
-            self.uvsMap['%i_%i' % (currentFaceId, f[0])] = (
-                (uvLine[i][0])*uvScale,
-                (uvLine[i][1])*uvScale
-            )
-            self.uvsMap['%i_%i' % (currentFaceId, f[1])] = (
-                (uvLine[i+1][0])*uvScale,
-                (uvLine[i+1][1])*uvScale
-            )
-            self.uvsMap['%i_%i' % (currentFaceId, f[2])] = (
-                (uvLine[i+1][0]+uvOffset[0])*uvScale,
-                (uvLine[i+1][1]+uvOffset[1])*uvScale
-            )
-            self.uvsMap['%i_%i' % (currentFaceId, f[3])] = (
-                (uvLine[i][0]+uvOffset[0])*uvScale,
-                (uvLine[i][1]+uvOffset[1])*uvScale
-            )
-
-            self.faces.append(f)
-            self.matIds.append(matId)
-
-        line.extend(anotherLine)
-        self.verts.extend(line)
-
     def createPileMesh(self, mesh, pilePos, offsetY):
         uvMap = {}
         currentFaceId = len(self.faces)
@@ -252,7 +197,6 @@ class vic_procedural_stair(bpy.types.Operator):
         if pileMesh is not None:
             for mat in pileMesh.data.materials:
                 obj.data.materials.append(mat)
-        obj.data.uv_layers.new()
 
     def createPile(self, mesh, piles):
         for p in piles:
@@ -309,10 +253,12 @@ class vic_procedural_stair(bpy.types.Operator):
             bpy.data.objects.remove(wallPrototype, do_unlink=True)
 
     def execute(self, context):
-        self.verts = []
-        self.faces = []
-        self.uvsMap = {}
-        self.matIds = []
+
+        meshData = prepareAndCreateMesh("Stair")
+        self.verts = meshData[0]
+        self.faces = meshData[1]
+        self.uvsMap = meshData[2]
+        self.matIds = meshData[3]
 
         # unselect all of object, and then can join my own object
         for obj in bpy.context.view_layer.objects:
@@ -345,21 +291,24 @@ class vic_procedural_stair(bpy.types.Operator):
 
         lastVertex = line[len(line)-1]
         # 階梯的點及uv
-        self.addVertexAndFaces(
+        addVertexAndFaces(
+            self.verts, self.faces, self.uvsMap, self.matIds,
             line, (0, self.width, 0), 
             uv, (-self.stairUvScaleX,0), 
             1, 0, flip=True)
 
         # 背面的點及uv
-        self.addVertexAndFaces(
+        addVertexAndFaces(
+            self.verts, self.faces, self.uvsMap, self.matIds,
             [lastVertex, (lastVertex[0],lastVertex[1],0)], (0, self.width, 0), 
             [(0,lastVertex[2]),(0,0)], (self.width,0),
             self.stairSideUvScale, 1, flip=True)
 
         # 側墻的點及uv
         for i in range(self.count):
-            self.addVertexAndFaces([
-                (i*stepDepth,-x, i*stepHeight+stepHeight),
+            addVertexAndFaces(
+                self.verts, self.faces, self.uvsMap, self.matIds,
+                [(i*stepDepth,-x, i*stepHeight+stepHeight),
                 (i*stepDepth,-x,0),
                 (i*stepDepth,x,0),
                 (i*stepDepth,x,i*stepHeight+stepHeight)
@@ -393,18 +342,8 @@ class vic_procedural_stair(bpy.types.Operator):
                 if pileMesh.type == 'MESH':
                     self.createPile(pileMesh, piles)
 
-        mesh = bpy.data.meshes.new("Stair")
-        obj = bpy.data.objects.new("Stair", mesh)
-        mesh.from_pydata(self.verts, [], self.faces)
-        addObject(obj)
+        obj = meshData[4]()
         self.assignMaterial(obj, wallMesh, pileMesh)
-
-        # assign uv
-        for i, face in enumerate(obj.data.polygons):
-            for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
-                uv = self.uvsMap['%i_%i' % (face.index, vert_idx)]
-                obj.data.uv_layers.active.data[loop_idx].uv = uv
-            face.material_index = self.matIds[i]
 
         activeObject(obj)
 

@@ -42,6 +42,7 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
 
         col.label(text='Lantern Generator')
         col.operator(ProceduralLantern.vic_procedural_lantern_proxy.bl_idname)
+        col.operator(ProceduralLantern.vic_procedural_lantern_connect.bl_idname)
         col.operator(ProceduralLantern.vic_procedural_lantern.bl_idname)
 
         col.label(text='Drag Effect')
@@ -66,7 +67,9 @@ classes = (
     MeshFlatten.vic_make_meshs_plane,
     ProceduralStair.vic_procedural_stair,
     ProceduralBridge.vic_procedural_bridge,
+    ProceduralLantern.vic_procedural_lantern_manager,
     ProceduralLantern.vic_procedural_lantern_proxy,
+    ProceduralLantern.vic_procedural_lantern_connect,
     ProceduralLantern.vic_procedural_lantern,
     LineAlign.vic_line_align
 )
