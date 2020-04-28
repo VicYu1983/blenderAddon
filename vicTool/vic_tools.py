@@ -126,6 +126,25 @@ def addVertexAndFaces(verts, faces, uvsMap, matIds, line, offset, uvLine, uvOffs
     line.extend(anotherLine)
     verts.extend(line)
 
+def addVertexByMesh(verts, faces, uvsMap, matIds, mesh, matIdOffset = 0, transformVertex = None):
+    currentFaceId = len(faces)
+    currentVertId = len(verts)
+    for m in mesh.data.polygons:
+        vs = []
+        currentVertexCount = len(verts)
+        for vid in m.vertices:
+            vs.append(vid + currentVertexCount)
+        faces.append(tuple(vs))
+        matIds.append(m.material_index+matIdOffset)
+
+        for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
+            uvsMap["%i_%i" % (m.index+currentFaceId,vert_idx+currentVertId)] = mesh.data.uv_layers.active.data[loop_idx].uv
+
+    for vid,v in enumerate(mesh.data.vertices):
+        if transformVertex: newpos = transformVertex(vid, v)
+        else: newpos = (v.co.x, v.co.y, v.co.z)
+        verts.append( newpos )
+
 def prepareAndCreateMesh(name):
     verts = []
     faces = []

@@ -2,6 +2,7 @@ import bpy
 from ..vic_tools import (
     addProps,
     addVertexAndFaces,
+    addVertexByMesh,
     prepareAndCreateMesh,
     getSelectedWithOrder
 )
@@ -130,6 +131,7 @@ class vic_procedural_lantern(bpy.types.Operator):
                         bpy.context.object.constraints[currentConstraintId].influence = 0.5
                         currentConstraintId += 1
                         proxyWithOrder.append(p)
+                        continue
 
             for i in range(len(proxyWithOrder)-1):
                 p = proxyWithOrder[i]
@@ -137,11 +139,13 @@ class vic_procedural_lantern(bpy.types.Operator):
                 dir = nextP.location - p.location
                 # print(dir)
 
-                addVertexAndFaces(
-                    self.verts, self.faces, self.uvsMap, self.matIds,
-                    [nextP.location, p.location],(0,0,1),
-                    [(0,0),(1,0)],(0,0),
-                    1,0
-                )
+                # addVertexAndFaces(
+                #     self.verts, self.faces, self.uvsMap, self.matIds,
+                #     [nextP.location, p.location],(0,0,1),
+                #     [(0,0),(1,0)],(0,0),
+                #     1,0
+                # )
+
+                addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, bpy.data.objects["Cylinder"])
 
         meshData[4]()

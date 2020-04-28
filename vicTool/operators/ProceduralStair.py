@@ -17,6 +17,7 @@ from ..vic_tools import (
     copyObject,
     focusObject,
     addVertexAndFaces,
+    addVertexByMesh,
     prepareAndCreateMesh
 )
 
@@ -132,53 +133,52 @@ class vic_procedural_stair(bpy.types.Operator):
     #     poll=scene_mychosenobject_poll
     # )
 
-    def createPileMesh(self, mesh, pilePos, offsetY):
-        uvMap = {}
-        currentFaceId = len(self.faces)
-        currentVertId = len(self.verts)
-        for m in mesh.data.polygons:
-            vs = []
-            currentVertexCount = len(self.verts)
-            for vid in m.vertices:
-                vs.append(vid + currentVertexCount)
-            self.faces.append(tuple(vs))
-            self.matIds.append(m.material_index+3)
+    # def createPileMesh(self, mesh, pilePos, offsetY):
+    #     uvMap = {}
+    #     currentFaceId = len(self.faces)
+    #     currentVertId = len(self.verts)
+    #     for m in mesh.data.polygons:
+    #         vs = []
+    #         currentVertexCount = len(self.verts)
+    #         for vid in m.vertices:
+    #             vs.append(vid + currentVertexCount)
+    #         self.faces.append(tuple(vs))
+    #         self.matIds.append(m.material_index+3)
 
-            for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
-                self.uvsMap["%i_%i" % (m.index+currentFaceId,vert_idx+currentVertId)] = mesh.data.uv_layers.active.data[loop_idx].uv
+    #         for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
+    #             self.uvsMap["%i_%i" % (m.index+currentFaceId,vert_idx+currentVertId)] = mesh.data.uv_layers.active.data[loop_idx].uv
 
-        for vid,v in enumerate(mesh.data.vertices):
-            pos = v.co
-            newpos = (
-                pos.x + pilePos[0], 
-                pos.y + offsetY, 
-                pos.z + pilePos[2]
-            )
-            self.verts.append( newpos )
+    #     for vid,v in enumerate(mesh.data.vertices):
+    #         pos = v.co
+    #         newpos = (
+    #             pos.x + pilePos[0], 
+    #             pos.y + offsetY, 
+    #             pos.z + pilePos[2]
+    #         )
+    #         self.verts.append( newpos )
 
-    def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
-        uvMap = {}
-        currentFaceId = len(self.faces)
-        currentVertId = len(self.verts)
-        for m in mesh.data.polygons:
-            vs = []
-            currentVertexCount = len(self.verts)
-            for vid in m.vertices:
-                vs.append(vid + currentVertexCount)
-            self.faces.append(tuple(vs))
-            self.matIds.append(m.material_index+2)
+    # def createOneWall(self, mesh, scaleFactor, tanRadian, startPos, wallPos, offsetY):
+    #     currentFaceId = len(self.faces)
+    #     currentVertId = len(self.verts)
+    #     for m in mesh.data.polygons:
+    #         vs = []
+    #         currentVertexCount = len(self.verts)
+    #         for vid in m.vertices:
+    #             vs.append(vid + currentVertexCount)
+    #         self.faces.append(tuple(vs))
+    #         self.matIds.append(m.material_index+2)
 
-            for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
-                self.uvsMap["%i_%i" % (m.index+currentFaceId,vert_idx+currentVertId)] = mesh.data.uv_layers.active.data[loop_idx].uv
+    #         for vert_idx, loop_idx in zip(m.vertices, m.loop_indices):
+    #             self.uvsMap["%i_%i" % (m.index+currentFaceId,vert_idx+currentVertId)] = mesh.data.uv_layers.active.data[loop_idx].uv
 
-        for vid,v in enumerate(mesh.data.vertices):
-            pos = v.co
-            newpos = (
-                pos.x * scaleFactor + wallPos.x + startPos.x, 
-                pos.y + wallPos.y + startPos.y + offsetY, 
-                pos.z + tanRadian * (pos.x * scaleFactor) + wallPos.z + startPos.z + self.wallHeight
-            )
-            self.verts.append( newpos )
+    #     for vid,v in enumerate(mesh.data.vertices):
+    #         pos = v.co
+    #         newpos = (
+    #             pos.x * scaleFactor + wallPos.x + startPos.x, 
+    #             pos.y + wallPos.y + startPos.y + offsetY, 
+    #             pos.z + tanRadian * (pos.x * scaleFactor) + wallPos.z + startPos.z + self.wallHeight
+    #         )
+    #         self.verts.append( newpos )
 
     def addMaterial(self, name):
         if not name in bpy.data.materials:
@@ -199,9 +199,21 @@ class vic_procedural_stair(bpy.types.Operator):
                 obj.data.materials.append(mat)
 
     def createPile(self, mesh, piles):
+        def cacheParam(pilePos, offsetY):
+            def transformWall(vid, v):
+                pos = v.co
+                newpos = (
+                    pos.x + pilePos[0], 
+                    pos.y + offsetY, 
+                    pos.z + pilePos[2]
+                )
+                return newpos
+            return transformWall
         for p in piles:
-            self.createPileMesh(mesh, p, self.width/2-self.wallOffsetY)
-            self.createPileMesh(mesh, p, -self.width/2+self.wallOffsetY)
+            addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 3, cacheParam(p, self.width/2-self.wallOffsetY))
+            addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 3, cacheParam(p, -self.width/2+self.wallOffsetY))
+            # self.createPileMesh(mesh, p, self.width/2-self.wallOffsetY)
+            # self.createPileMesh(mesh, p, -self.width/2+self.wallOffsetY)
 
     def createWall(self, mesh):
         stepHeight = self.height / self.count
@@ -218,12 +230,27 @@ class vic_procedural_stair(bpy.types.Operator):
         radian = Vector((1,0,0)).angle(connect.normalized())
         tanRadian = tan(radian)
 
+        def cacheParam(scaleFactor, tanRadian, startPos, wallPos, offsetY):
+            def transformWall(vid, v):
+                pos = v.co
+                newpos = (
+                    pos.x * scaleFactor + wallPos.x + startPos.x, 
+                    pos.y + wallPos.y + startPos.y + offsetY, 
+                    pos.z + tanRadian * (pos.x * scaleFactor) + wallPos.z + startPos.z + self.wallHeight
+                )
+                return newpos
+            return transformWall
+
         #create mesh in the same object
         if not self.editMode:
             for i in range(count):
                 wallPos = wallSingle * (i + .5)
-                self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY)
-                self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY)
+
+                addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 2, cacheParam(scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY))
+                addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 2, cacheParam(scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY))
+
+                # self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY)
+                # self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY)
         else:
             # create mesh for every wall
             wallPrototype = copyObject(mesh)
