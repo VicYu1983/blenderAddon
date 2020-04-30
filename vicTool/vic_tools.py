@@ -72,6 +72,7 @@ def getSelectedWithOrder():
 # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
 # 用兩條綫上的點來產生面
 def addVertexAndFaces(verts, faces, uvsMap, matIds, line, offset, uvLine, uvOffset, uvScale, matId, flip = False, close = False):
+    line = line.copy()
     anotherLine = []
     startId = len(verts)
     for i, v in enumerate(line):
@@ -101,7 +102,7 @@ def addVertexAndFaces(verts, faces, uvsMap, matIds, line, offset, uvLine, uvOffs
                 f = (v1, v4, v3, v2)
             else:
                 f = (v1, v2, v3, v4)
-        
+
         currentFaceId = len(faces)
         uvsMap['%i_%i' % (currentFaceId, f[0])] = (
             (uvLine[i][0])*uvScale,
@@ -168,3 +169,11 @@ def prepareAndCreateMesh(name):
         return obj
 
     return [ verts, faces, uvsMap, matIds, create ]
+
+def mergeOverlayVertex(obj):
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.remove_doubles()
+    bpy.ops.object.editmode_toggle()    

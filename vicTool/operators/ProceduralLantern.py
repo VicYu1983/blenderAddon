@@ -1,11 +1,6 @@
-import bpy
-from ..vic_tools import (
-    addProps,
-    addVertexAndFaces,
-    addVertexByMesh,
-    prepareAndCreateMesh,
-    getSelectedWithOrder
-)
+import bpy, math, time
+from mathutils import *
+from ..vic_tools import *
 
 class vic_procedural_lantern_manager(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_lantern_manager"
@@ -59,7 +54,7 @@ class vic_procedural_lantern_connect(bpy.types.Operator):
         if len(objs) >= 2:
             connectIds = [str(o["Id"]) for o in objs]
 
-            bpy.ops.object.empty_add(type='CUBE', location=([0,0,0]))
+            bpy.ops.object.empty_add(type='PLAIN_AXES', location=([0,0,0]))
             connectObj = bpy.context.object
             connectObj.parent = bpy.data.objects["LanternDataStorage"]
             connectObj.name = "ConnectData"
@@ -72,46 +67,35 @@ class vic_procedural_lantern(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_lantern"
     bl_label = "Generate Lantern"
 
-    def modal(self, context, event):
-        if event.type in {'ESC'}:
-            self.cancel(context)
-            return {'CANCELLED'}
-
-        if event.type in ["LEFTMOUSE", "RIGHTMOUSE"]:
-            print("update")
-            self.updateMesh()
-
-        return {'PASS_THROUGH'}
-
     def execute(self, context):
-        # wm = context.window_manager
-        # # start animating
-        # # bpy.ops.screen.animation_play()
-        # # self._timer = wm.event_timer_add(1, window=context.window)
-        # # self.count = 0
-        # wm.modal_handler_add(self)
-        # return {'RUNNING_MODAL'}
-
         self.updateMesh()
         return {'FINISHED'}
 
-    def cancel(self, context):
-        pass
-        # bpy.ops.screen.animation_cancel(restore_frame=False)
-
-
-        # wm = context.window_manager
-        # wm.event_timer_remove(self._timer)
+    def getCurve(self, index, segment, gravity):
+        return (1-pow((abs(index - segment/2)/(segment/2)), 2)) * gravity
 
     def updateMesh(self):
+
         de = [o for o in bpy.data.objects if "Ropes" in o.name]
         bpy.ops.object.delete({"selected_objects": de})
 
         meshData = prepareAndCreateMesh("Ropes")
-        self.verts = meshData[0]
-        self.faces = meshData[1]
-        self.uvsMap = meshData[2]
-        self.matIds = meshData[3]
+        verts = meshData[0]
+        faces = meshData[1]
+        uvsMap = meshData[2]
+        matIds = meshData[3]
+
+        numTri = 6
+        radius = .4
+        gravity = 10
+        shape = []
+        uv = []
+        for i in range(numTri):
+            radian = (2 * math.pi) * i / numTri
+            shape.append((math.cos(radian)*radius, 0,math.sin(radian)*radius))
+            uv.append((0,0))
+        shape.append(shape[0])
+        uv.append(uv[0])
 
         connects = [o for o in bpy.data.objects if "ConnectData" in o.name]
         proxys = [o for o in bpy.data.objects if "ProxyData" in o.name]
@@ -137,15 +121,75 @@ class vic_procedural_lantern(bpy.types.Operator):
                 p = proxyWithOrder[i]
                 nextP = proxyWithOrder[i+1]
                 dir = nextP.location - p.location
-                # print(dir)
 
-                # addVertexAndFaces(
-                #     self.verts, self.faces, self.uvsMap, self.matIds,
-                #     [nextP.location, p.location],(0,0,1),
-                #     [(0,0),(1,0)],(0,0),
-                #     1,0
-                # )
+                dirForDegree = dir.copy()
+                dirForDegree.z = 0
+                dist = dirForDegree.length
+                radian = dirForDegree.angle(Vector([0,1,0]))
+                cross = dirForDegree.cross(Vector([0,1,0]))
+                if cross.z > 0:
+                    radian *= -1
+                rotMat = Matrix.Rotation(radian, 4, 'Z')
 
-                addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, bpy.data.objects["Cylinder"])
+                segLength = min(4, dist )
+                seg = round(dist / segLength)
+                for i in range(seg):
+                    segDist = i * dist / seg
+                    placeOn = i * dir / seg + p.location
+                    gravityEffect = Vector((0,0,-self.getCurve(i, seg, gravity)))
 
-        meshData[4]()
+                    if i < seg - 1:
+                        nextPlaceOn = (i + 1) * dir / seg + p.location
+                        nextGravityEffect = Vector((0,0,-self.getCurve(i+1, seg, gravity) - gravityEffect.z))
+                    else:
+                        nextPlaceOn = nextP.location
+                        nextGravityEffect = Vector((0,0, self.getCurve(i, seg, gravity)))
+
+                    shapeOffset = []
+                    for pos in shape:
+                        pos = Vector(pos)
+                        pos += Vector((0, segDist, 0))
+                        pos = rotMat @ pos
+                        pos += Vector((p.location.x, p.location.y, placeOn.z ))
+                        pos += gravityEffect
+                        shapeOffset.append((pos.x, pos.y, pos.z))
+
+                    extend = Vector((0, dist / seg, 0))
+                    extend = rotMat @ extend
+                    extend.z += nextPlaceOn.z - placeOn.z
+                    extend += nextGravityEffect
+
+                    addVertexAndFaces(
+                        verts, faces, uvsMap, matIds,
+                        shapeOffset, extend,
+                        uv,(0,0),
+                        1,0
+                    )
+        obj = meshData[4]()
+
+        mergeOverlayVertex(obj)
+
+# def updateMesh(scene):
+#     print(scene.frame_current)
+    
+#     if scene.frame_current % 5 == 0:
+#         time.sleep(.01)
+#         bpy.ops.vic.vic_procedural_lantern()
+
+# class vic_procedural_lantern_life(bpy.types.Operator):
+#     bl_idname = "vic.vic_procedural_lantern_life"
+#     bl_label = "Live Edit"
+
+#     def execute(self, context):
+#         bpy.ops.screen.animation_play()
+#         # if updateMesh in bpy.app.handlers.frame_change_post:
+#             # bpy.app.handlers.frame_change_post.remove(updateMesh)
+#         bpy.app.handlers.frame_change_post.clear()
+#         # try:
+#         #     bpy.app.handlers.frame_change_post.remove(updateMesh)
+#         #     print("delte")
+#         # except:
+#         #     print("not in")
+#         bpy.app.handlers.frame_change_post.append(updateMesh)
+
+#         return {'FINISHED'}
