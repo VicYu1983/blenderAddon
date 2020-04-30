@@ -108,7 +108,7 @@ class vic_procedural_lantern(bpy.types.Operator):
             uv = []
             for i in range(numTri):
                 radian = (2 * math.pi) * i / numTri
-                shape.append((math.cos(radian)*radius, 0,math.sin(radian)*radius))
+                shape.append((0, math.cos(radian)*radius,math.sin(radian)*radius))
                 uv.append((0,0))
             shape.append(shape[0])
             uv.append(uv[0])
@@ -137,7 +137,7 @@ class vic_procedural_lantern(bpy.types.Operator):
 
                 dirForDegree = dir.copy()
                 dirForDegree.z = 0
-                dist = dirForDegree.length
+                dist = dir.length
                 radian = dirForDegree.angle(Vector([0,1,0]))
                 cross = dirForDegree.cross(Vector([0,1,0]))
                 if cross.z > 0:
@@ -146,38 +146,84 @@ class vic_procedural_lantern(bpy.types.Operator):
 
                 segLength = min(segment, dist )
                 seg = round(dist / segLength)
+
+                segpoint = []
                 for i in range(seg):
-                    segDist = i * dist / seg
                     placeOn = i * dir / seg + p.location
                     gravityEffect = Vector((0,0,-self.getCurve(i, seg, gravity)))
 
-                    if i < seg - 1:
-                        nextPlaceOn = (i + 1) * dir / seg + p.location
-                        nextGravityEffect = Vector((0,0,-self.getCurve(i+1, seg, gravity) - gravityEffect.z))
-                    else:
-                        nextPlaceOn = nextP.location
-                        nextGravityEffect = Vector((0,0, self.getCurve(i, seg, gravity)))
+                    pos = placeOn
+                    pos += gravityEffect
+                    segpoint.append(pos)
+                segpoint.append(nextP.location)
+
+                for i in range(len(segpoint)-1):
+                    p = segpoint[i]
+                    np = segpoint[i+1]
+                    forward = np - p
+                    forward.normalize()
+                    right = forward.cross(Vector((0,0,1)))
+                    right.normalize()
+                    up = right.cross(forward)
+                    up.normalize()
+
+                    rotMat = Matrix((
+                        (forward.x, right.x, up.x, p.x), 
+                        (forward.y, right.y, up.y, p.y), 
+                        (forward.z, right.z, up.z, p.z), 
+                        (0,0,0,1)
+                    ))
+
+                    bpy.ops.object.empty_add(type='ARROWS')
+                    bpy.context.object.matrix_world = rotMat
+                    bpy.context.object.name = "Ropes"
 
                     shapeOffset = []
                     for pos in shape:
                         pos = Vector(pos)
-                        pos += Vector((0, segDist, 0))
                         pos = rotMat @ pos
-                        pos += Vector((p.location.x, p.location.y, placeOn.z ))
-                        pos += gravityEffect
                         shapeOffset.append((pos.x, pos.y, pos.z))
 
-                    extend = Vector((0, dist / seg, 0))
-                    extend = rotMat @ extend
-                    extend.z += nextPlaceOn.z - placeOn.z
-                    extend += nextGravityEffect
-
+                    extend = Vector((0, 1, 0))
                     addVertexAndFaces(
                         verts, faces, uvsMap, matIds,
                         shapeOffset, extend,
                         uv,(0,0),
                         1,0
                     )
+
+                # for i in range(seg):
+                #     segDist = i * dist / seg
+                #     placeOn = i * dir / seg + p.location
+                #     gravityEffect = Vector((0,0,-self.getCurve(i, seg, gravity)))
+
+                #     if i < seg - 1:
+                #         nextPlaceOn = (i + 1) * dir / seg + p.location
+                #         nextGravityEffect = Vector((0,0,-self.getCurve(i+1, seg, gravity) - gravityEffect.z))
+                #     else:
+                #         nextPlaceOn = nextP.location
+                #         nextGravityEffect = Vector((0,0, self.getCurve(i, seg, gravity)))
+
+                #     shapeOffset = []
+                #     for pos in shape:
+                #         pos = Vector(pos)
+                #         pos += Vector((0, segDist, 0))
+                #         pos = rotMat @ pos
+                #         pos += Vector((p.location.x, p.location.y, placeOn.z ))
+                #         pos += gravityEffect
+                #         shapeOffset.append((pos.x, pos.y, pos.z))
+
+                #     extend = Vector((0, dist / seg, 0))
+                #     extend = rotMat @ extend
+                #     extend.z += nextPlaceOn.z - placeOn.z
+                #     extend += nextGravityEffect
+
+                #     addVertexAndFaces(
+                #         verts, faces, uvsMap, matIds,
+                #         shapeOffset, extend,
+                #         uv,(0,0),
+                #         1,0
+                #     )
         obj = meshData[4]()
 
         mergeOverlayVertex(obj)
