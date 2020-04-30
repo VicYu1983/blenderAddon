@@ -14,6 +14,7 @@ class vic_procedural_lantern_manager(bpy.types.Operator):
         bpy.ops.object.empty_add(type='CUBE', location=([0,0,0]))
         mgrObj = context.object
         mgrObj.name = "LanternDataStorage"
+        # mgrObj["segment"] = 1.0
         return {'FINISHED'}
 
 class vic_procedural_lantern_proxy(bpy.types.Operator):
@@ -39,7 +40,6 @@ class vic_procedural_lantern_proxy(bpy.types.Operator):
 
         addProps(obj, "Id", currentId+1)
 
-        bpy.ops.vic.vic_procedural_lantern()
         return {'FINISHED'}
 
 class vic_procedural_lantern_connect(bpy.types.Operator):
@@ -59,6 +59,10 @@ class vic_procedural_lantern_connect(bpy.types.Operator):
             connectObj.parent = bpy.data.objects["LanternDataStorage"]
             connectObj.name = "ConnectData"
             connectObj["Connect"] = "_".join(connectIds)
+            connectObj["Radius"] = 1.0
+            connectObj["NGon"] = 3
+            connectObj["Gravity"] = 20.0
+            connectObj["Segment"] = 1.0
 
         bpy.ops.vic.vic_procedural_lantern()    
         return {'FINISHED'}
@@ -85,22 +89,31 @@ class vic_procedural_lantern(bpy.types.Operator):
         uvsMap = meshData[2]
         matIds = meshData[3]
 
-        numTri = 6
-        radius = .4
-        gravity = 10
-        shape = []
-        uv = []
-        for i in range(numTri):
-            radian = (2 * math.pi) * i / numTri
-            shape.append((math.cos(radian)*radius, 0,math.sin(radian)*radius))
-            uv.append((0,0))
-        shape.append(shape[0])
-        uv.append(uv[0])
+        # segment = bpy.data.objects["LanternDataStorage"]["segment"]
 
         connects = [o for o in bpy.data.objects if "ConnectData" in o.name]
         proxys = [o for o in bpy.data.objects if "ProxyData" in o.name]
         for connect in connects:
             idstr = connect["Connect"]
+            radius = connect["Radius"]
+            numTri = connect["NGon"]
+            gravity = connect["Gravity"]
+            segment = connect["Segment"]
+
+            radius = max(radius, 0.01)
+            numTri = max(numTri, 3)
+            segment = max(segment, .01)
+
+            shape = []
+            uv = []
+            for i in range(numTri):
+                radian = (2 * math.pi) * i / numTri
+                shape.append((math.cos(radian)*radius, 0,math.sin(radian)*radius))
+                uv.append((0,0))
+            shape.append(shape[0])
+            uv.append(uv[0])
+            
+            
             ids = idstr.split("_")
             connect.constraints.clear()
 
@@ -131,7 +144,7 @@ class vic_procedural_lantern(bpy.types.Operator):
                     radian *= -1
                 rotMat = Matrix.Rotation(radian, 4, 'Z')
 
-                segLength = min(4, dist )
+                segLength = min(segment, dist )
                 seg = round(dist / segLength)
                 for i in range(seg):
                     segDist = i * dist / seg
@@ -168,6 +181,13 @@ class vic_procedural_lantern(bpy.types.Operator):
         obj = meshData[4]()
 
         mergeOverlayVertex(obj)
+
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.faces_shade_smooth()
+        bpy.ops.object.editmode_toggle()
+
+        bpy.ops.object.select_all(action='DESELECT')
+
 
 # def updateMesh(scene):
 #     print(scene.frame_current)
