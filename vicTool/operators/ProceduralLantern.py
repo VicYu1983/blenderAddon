@@ -67,6 +67,13 @@ class vic_procedural_lantern_connect(bpy.types.Operator):
             connectObj["Gravity Scale"] = 1.0
             connectObj["Segment Scale"] = 1.0
 
+            currentConstraintId = 0
+            for p in objs:
+                bpy.ops.object.constraint_add(type='COPY_LOCATION')
+                bpy.context.object.constraints[currentConstraintId].target = p
+                bpy.context.object.constraints[currentConstraintId].influence = 0.5
+                currentConstraintId += 1
+
         bpy.ops.vic.vic_procedural_lantern()    
         return {'FINISHED'}
 
@@ -78,8 +85,23 @@ class vic_procedural_lantern(bpy.types.Operator):
         self.updateMesh()
         return {'FINISHED'}
 
+        # context.window_manager.modal_handler_add(self)
+        # return {'RUNNING_MODAL'}
+        
+
     def getCurve(self, index, segment, gravity):
         return (1-pow((abs(index - segment/2)/(segment/2)), 2)) * gravity
+
+    # def modal(self, context, event):
+        
+    #     print("MODAL")
+        
+    #     if event.type in {'RIGHTMOUSE', 'ESC'}:
+    #         print("END")
+    #         return {'CANCELLED'}
+    #     self.updateMesh()
+
+    #     return {'RUNNING_MODAL'}
 
     def updateMesh(self):
 
@@ -125,23 +147,13 @@ class vic_procedural_lantern(bpy.types.Operator):
                 radian = (2 * math.pi) * i / cngon
                 shape.append((0, math.cos(radian)*cradius,math.sin(radian)*cradius))
             shape.append(shape[0])
-            
-            # 賦予constraint前先清空
-            connect.constraints.clear()
 
             # 依照所選的順序收集點
             proxyWithOrder = []
-
-            currentConstraintId = 0
             ids = idstr.split("_")
             for id in ids:
                 for p in proxys:
                     if p["Id"] == int(id):
-                        bpy.context.view_layer.objects.active = connect
-                        bpy.ops.object.constraint_add(type='COPY_LOCATION')
-                        bpy.context.object.constraints[currentConstraintId].target = p
-                        bpy.context.object.constraints[currentConstraintId].influence = 0.5
-                        currentConstraintId += 1
                         proxyWithOrder.append(p)
                         continue
 
@@ -240,36 +252,35 @@ class vic_procedural_lantern(bpy.types.Operator):
             for mat in mats:
                 obj.data.materials.append(mat)
 
-        mergeOverlayVertex(obj)
+        # mergeOverlayVertex(obj)
 
-        bpy.ops.object.editmode_toggle()
-        bpy.ops.mesh.faces_shade_smooth()
-        bpy.ops.object.editmode_toggle()
+        # bpy.ops.object.editmode_toggle()
+        # bpy.ops.mesh.faces_shade_smooth()
+        # bpy.ops.object.editmode_toggle()
 
-        bpy.ops.object.select_all(action='DESELECT')
+        # bpy.ops.object.select_all(action='DESELECT')
 
-
-# def updateMesh(scene):
-#     print(scene.frame_current)
+def updateMesh(scene):
+    print(scene.frame_current)
     
-#     if scene.frame_current % 5 == 0:
-#         time.sleep(.01)
-#         bpy.ops.vic.vic_procedural_lantern()
+    if scene.frame_current % 1 == 0:
+        time.sleep(.01)
+        bpy.ops.vic.vic_procedural_lantern()
 
-# class vic_procedural_lantern_life(bpy.types.Operator):
-#     bl_idname = "vic.vic_procedural_lantern_life"
-#     bl_label = "Live Edit"
+class vic_procedural_lantern_life(bpy.types.Operator):
+    bl_idname = "vic.vic_procedural_lantern_life"
+    bl_label = "Live Edit"
 
-#     def execute(self, context):
-#         bpy.ops.screen.animation_play()
-#         # if updateMesh in bpy.app.handlers.frame_change_post:
-#             # bpy.app.handlers.frame_change_post.remove(updateMesh)
-#         bpy.app.handlers.frame_change_post.clear()
-#         # try:
-#         #     bpy.app.handlers.frame_change_post.remove(updateMesh)
-#         #     print("delte")
-#         # except:
-#         #     print("not in")
-#         bpy.app.handlers.frame_change_post.append(updateMesh)
+    def execute(self, context):
+        bpy.ops.screen.animation_play()
+        # if updateMesh in bpy.app.handlers.frame_change_post:
+            # bpy.app.handlers.frame_change_post.remove(updateMesh)
+        bpy.app.handlers.frame_change_post.clear()
+        # try:
+        #     bpy.app.handlers.frame_change_post.remove(updateMesh)
+        #     print("delte")
+        # except:
+        #     print("not in")
+        bpy.app.handlers.frame_change_post.append(updateMesh)
 
-#         return {'FINISHED'}
+        return {'FINISHED'}
