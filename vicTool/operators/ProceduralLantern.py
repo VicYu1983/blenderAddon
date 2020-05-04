@@ -14,7 +14,10 @@ class vic_procedural_lantern_manager(bpy.types.Operator):
         bpy.ops.object.empty_add(type='CUBE', location=([0,0,0]))
         mgrObj = context.object
         mgrObj.name = "LanternDataStorage"
-        # mgrObj["segment"] = 1.0
+        mgrObj["NGon"] = 3
+        mgrObj["Segment"] = 1.0
+        mgrObj["Gravity"] = 20.0
+        mgrObj["Radius"] = 1.0
         return {'FINISHED'}
 
 class vic_procedural_lantern_proxy(bpy.types.Operator):
@@ -59,10 +62,10 @@ class vic_procedural_lantern_connect(bpy.types.Operator):
             connectObj.parent = bpy.data.objects["LanternDataStorage"]
             connectObj.name = "ConnectData"
             connectObj["Connect"] = "_".join(connectIds)
-            connectObj["Radius"] = 1.0
-            connectObj["NGon"] = 3
-            connectObj["Gravity"] = 20.0
-            connectObj["Segment"] = 1.0
+            connectObj["NGon Add"] = 0
+            connectObj["Radius Scale"] = 1.0
+            connectObj["Gravity Scale"] = 1.0
+            connectObj["Segment Scale"] = 1.0
 
         bpy.ops.vic.vic_procedural_lantern()    
         return {'FINISHED'}
@@ -80,8 +83,10 @@ class vic_procedural_lantern(bpy.types.Operator):
 
     def updateMesh(self):
 
-        de = [o for o in bpy.data.objects if "Ropes" in o.name]
-        bpy.ops.object.delete({"selected_objects": de})
+        mats = None
+        if "Ropes" in bpy.data.objects.keys():
+            mats = bpy.data.objects["Ropes"].data.materials
+            bpy.ops.object.delete({"selected_objects": [bpy.data.objects["Ropes"]]})
 
         meshData = prepareAndCreateMesh("Ropes")
         verts = meshData[0]
@@ -89,35 +94,46 @@ class vic_procedural_lantern(bpy.types.Operator):
         uvsMap = meshData[2]
         matIds = meshData[3]
 
-        # segment = bpy.data.objects["LanternDataStorage"]["segment"]
+        segment = bpy.data.objects["LanternDataStorage"]["Segment"]
+        gravity = bpy.data.objects["LanternDataStorage"]["Gravity"]
+        radius = bpy.data.objects["LanternDataStorage"]["Radius"]
+        ngon = bpy.data.objects["LanternDataStorage"]["NGon"]
 
         connects = [o for o in bpy.data.objects if "ConnectData" in o.name]
         proxys = [o for o in bpy.data.objects if "ProxyData" in o.name]
         for connect in connects:
             idstr = connect["Connect"]
-            radius = connect["Radius"]
-            numTri = connect["NGon"]
-            gravity = connect["Gravity"]
-            segment = connect["Segment"]
+            ngonAdd = connect["NGon Add"]
+            radiusScale = connect["Radius Scale"]
+            gravityScale = connect["Gravity Scale"]
+            segmentScale = connect["Segment Scale"]
 
-            radius = max(radius, 0.01)
-            numTri = max(numTri, 3)
-            segment = max(segment, .01)
+            cngon = ngon + ngonAdd
+            cngon = max(cngon, 3)
 
-            shape = []
-            uv = []
-            for i in range(numTri):
-                radian = (2 * math.pi) * i / numTri
-                shape.append((0, math.cos(radian)*radius,math.sin(radian)*radius))
-                uv.append((0,0))
-            shape.append(shape[0])
-            uv.append(uv[0])
+            cradius = radius * radiusScale
+            cradius = max(cradius, 0.01)
             
-            ids = idstr.split("_")
+            cgravity = gravity * gravityScale
+
+            csegment = segment * segmentScale
+            csegment = max(csegment, .01)
+
+            # 繩子的橫截面的點的坐標
+            shape = []
+            for i in range(cngon):
+                radian = (2 * math.pi) * i / cngon
+                shape.append((0, math.cos(radian)*cradius,math.sin(radian)*cradius))
+            shape.append(shape[0])
+            
+            # 賦予constraint前先清空
             connect.constraints.clear()
 
+            # 依照所選的順序收集點
             proxyWithOrder = []
+
             currentConstraintId = 0
+            ids = idstr.split("_")
             for id in ids:
                 for p in proxys:
                     if p["Id"] == int(id):
@@ -129,30 +145,36 @@ class vic_procedural_lantern(bpy.types.Operator):
                         proxyWithOrder.append(p)
                         continue
 
+            # 按照順序來產生繩子
             for i in range(len(proxyWithOrder)-1):
                 p = proxyWithOrder[i]
                 nextP = proxyWithOrder[i+1]
-                dir = nextP.location - p.location
 
-                dirForDegree = dir.copy()
-                dirForDegree.z = 0
+                # 全域坐標只能從世界矩陣來取
+                pWorldLocation = Vector((p.matrix_world[0][3], p.matrix_world[1][3], p.matrix_world[2][3]))
+                nextPWorldLocation = Vector((nextP.matrix_world[0][3], nextP.matrix_world[1][3], nextP.matrix_world[2][3]))
+
+                # 取得方向
+                dir = nextPWorldLocation - pWorldLocation
+
+                # 取得總長
                 dist = dir.length
-                radian = dirForDegree.angle(Vector([0,1,0]))
-                cross = dirForDegree.cross(Vector([0,1,0]))
-                if cross.z > 0:
-                    radian *= -1
-                rotMat = Matrix.Rotation(radian, 4, 'Z')
 
-                segLength = min(segment, dist )
+                # 每一小段的長度，不能超過總長
+                segLength = min(csegment, dist )
+
+                # 總共有幾段
                 seg = round(dist / segLength)
 
+                # 算出兩個端點之間的路徑
                 segpoint = []
                 for i in range(seg):
-                    gravityEffect = Vector((0,0,-self.getCurve(i, seg, gravity)))
-                    pos = i * dir / seg + p.location + gravityEffect
+                    gravityEffect = Vector((0,0,-self.getCurve(i, seg, cgravity)))
+                    pos = i * dir / seg + pWorldLocation + gravityEffect
                     segpoint.append(pos)
-                segpoint.append(nextP.location)
+                segpoint.append(nextPWorldLocation)
 
+                # 算出路徑當中每一個點的方向
                 rotmats = []
                 for i in range(len(segpoint)-1):
                     p = segpoint[i]
@@ -163,7 +185,6 @@ class vic_procedural_lantern(bpy.types.Operator):
                     right.normalize()
                     up = right.cross(forward)
                     up.normalize()
-
                     rotmat = Matrix((
                         (forward.x, right.x, up.x, p.x), 
                         (forward.y, right.y, up.y, p.y), 
@@ -172,6 +193,7 @@ class vic_procedural_lantern(bpy.types.Operator):
                     ))
                     rotmats.append(rotmat)
 
+                # 產生所有的點
                 for i, rotmat in enumerate(rotmats):
 
                     # for debug
@@ -179,33 +201,44 @@ class vic_procedural_lantern(bpy.types.Operator):
                     # bpy.context.object.matrix_world = rotmat
                     # bpy.context.object.name = "Ropes"
 
+                    # 用橫截面加上矩陣來產生所有的點（當前的點）
                     shapeOffset = []
                     for pos in shape:
                         pos = Vector(pos)
                         pos = rotmat @ pos
                         shapeOffset.append((pos.x, pos.y, pos.z))
 
+                    # 用橫截面加上矩陣來產生所有的點（下一點）
                     nextShapeOffset = []
                     if i == len(rotmats)-1:
+
+                        # 如果當前的點是最後一個點，他的下一點就是端點，取nextPWorldLocation
                         for pos in shapeOffset:
                             pos = Vector(pos)
-                            pos += nextP.location - Vector((rotmat[0][3], rotmat[1][3], rotmat[2][3]))
+                            pos += nextPWorldLocation - Vector((rotmat[0][3], rotmat[1][3], rotmat[2][3]))
                             nextShapeOffset.append((pos.x, pos.y, pos.z))
                     else:
+
+                        # 如果當前的點不是最後一點，就取下一點。i+1
                         for pos in shape:
                             pos = Vector(pos)
                             pos = rotmats[i+1] @ pos
                             nextShapeOffset.append((pos.x, pos.y, pos.z))
 
+                    # 收集所有的點及uv
                     for i in range(len(shapeOffset)-1):
-                        uvy = (1 / (len(shapeOffset)-1)) * i
-                        uvheight = uvy + (1 / (len(shapeOffset)-1))
+                        segheight = (1 / (len(shapeOffset)-1))
+                        uvy = segheight * i
+                        uvheight = uvy + segheight
                         addRectVertex(
                             verts, faces, uvsMap, matIds,
                             [shapeOffset[i+1], shapeOffset[i], nextShapeOffset[i], nextShapeOffset[i+1]], [(0,uvheight), (0,uvy), (1,uvy), (1,uvheight)]
                         )
                         
         obj = meshData[4]()
+        if mats is not None:
+            for mat in mats:
+                obj.data.materials.append(mat)
 
         mergeOverlayVertex(obj)
 
