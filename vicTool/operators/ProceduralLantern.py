@@ -113,7 +113,6 @@ class vic_procedural_lantern(bpy.types.Operator):
             shape.append(shape[0])
             uv.append(uv[0])
             
-            
             ids = idstr.split("_")
             connect.constraints.clear()
 
@@ -149,14 +148,12 @@ class vic_procedural_lantern(bpy.types.Operator):
 
                 segpoint = []
                 for i in range(seg):
-                    placeOn = i * dir / seg + p.location
                     gravityEffect = Vector((0,0,-self.getCurve(i, seg, gravity)))
-
-                    pos = placeOn
-                    pos += gravityEffect
+                    pos = i * dir / seg + p.location + gravityEffect
                     segpoint.append(pos)
                 segpoint.append(nextP.location)
 
+                rotmats = []
                 for i in range(len(segpoint)-1):
                     p = segpoint[i]
                     np = segpoint[i+1]
@@ -167,63 +164,47 @@ class vic_procedural_lantern(bpy.types.Operator):
                     up = right.cross(forward)
                     up.normalize()
 
-                    rotMat = Matrix((
+                    rotmat = Matrix((
                         (forward.x, right.x, up.x, p.x), 
                         (forward.y, right.y, up.y, p.y), 
                         (forward.z, right.z, up.z, p.z), 
                         (0,0,0,1)
                     ))
+                    rotmats.append(rotmat)
 
-                    bpy.ops.object.empty_add(type='ARROWS')
-                    bpy.context.object.matrix_world = rotMat
-                    bpy.context.object.name = "Ropes"
+                for i, rotmat in enumerate(rotmats):
+
+                    # for debug
+                    # bpy.ops.object.empty_add(type='ARROWS')
+                    # bpy.context.object.matrix_world = rotmat
+                    # bpy.context.object.name = "Ropes"
 
                     shapeOffset = []
                     for pos in shape:
                         pos = Vector(pos)
-                        pos = rotMat @ pos
+                        pos = rotmat @ pos
                         shapeOffset.append((pos.x, pos.y, pos.z))
 
-                    extend = Vector((0, 1, 0))
-                    addVertexAndFaces(
-                        verts, faces, uvsMap, matIds,
-                        shapeOffset, extend,
-                        uv,(0,0),
-                        1,0
-                    )
+                    nextShapeOffset = []
+                    if i == len(rotmats)-1:
+                        for pos in shapeOffset:
+                            pos = Vector(pos)
+                            pos += nextP.location - Vector((rotmat[0][3], rotmat[1][3], rotmat[2][3]))
+                            nextShapeOffset.append((pos.x, pos.y, pos.z))
+                    else:
+                        for pos in shape:
+                            pos = Vector(pos)
+                            pos = rotmats[i+1] @ pos
+                            nextShapeOffset.append((pos.x, pos.y, pos.z))
 
-                # for i in range(seg):
-                #     segDist = i * dist / seg
-                #     placeOn = i * dir / seg + p.location
-                #     gravityEffect = Vector((0,0,-self.getCurve(i, seg, gravity)))
-
-                #     if i < seg - 1:
-                #         nextPlaceOn = (i + 1) * dir / seg + p.location
-                #         nextGravityEffect = Vector((0,0,-self.getCurve(i+1, seg, gravity) - gravityEffect.z))
-                #     else:
-                #         nextPlaceOn = nextP.location
-                #         nextGravityEffect = Vector((0,0, self.getCurve(i, seg, gravity)))
-
-                #     shapeOffset = []
-                #     for pos in shape:
-                #         pos = Vector(pos)
-                #         pos += Vector((0, segDist, 0))
-                #         pos = rotMat @ pos
-                #         pos += Vector((p.location.x, p.location.y, placeOn.z ))
-                #         pos += gravityEffect
-                #         shapeOffset.append((pos.x, pos.y, pos.z))
-
-                #     extend = Vector((0, dist / seg, 0))
-                #     extend = rotMat @ extend
-                #     extend.z += nextPlaceOn.z - placeOn.z
-                #     extend += nextGravityEffect
-
-                #     addVertexAndFaces(
-                #         verts, faces, uvsMap, matIds,
-                #         shapeOffset, extend,
-                #         uv,(0,0),
-                #         1,0
-                #     )
+                    for i in range(len(shapeOffset)-1):
+                        uvy = (1 / (len(shapeOffset)-1)) * i
+                        uvheight = uvy + (1 / (len(shapeOffset)-1))
+                        addRectVertex(
+                            verts, faces, uvsMap, matIds,
+                            [shapeOffset[i+1], shapeOffset[i], nextShapeOffset[i], nextShapeOffset[i+1]], [(0,uvheight), (0,uvy), (1,uvy), (1,uvheight)]
+                        )
+                        
         obj = meshData[4]()
 
         mergeOverlayVertex(obj)

@@ -71,7 +71,10 @@ def getSelectedWithOrder():
 
 # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
 # 用兩條綫上的點來產生面
-def addVertexAndFaces(verts, faces, uvsMap, matIds, line, offset, uvLine, uvOffset, uvScale, matId, flip = False, close = False):
+# 搭配 prepareAndCreateMesh 一起使用
+def addVertexAndFaces(  verts, faces, uvsMap, matIds, 
+                        line, offset, uvLine, uvOffset, 
+                        uvScale = 1, matId = 0, flip = False, close = False):
     line = line.copy()
     anotherLine = []
     startId = len(verts)
@@ -127,7 +130,31 @@ def addVertexAndFaces(verts, faces, uvsMap, matIds, line, offset, uvLine, uvOffs
     line.extend(anotherLine)
     verts.extend(line)
 
-def addVertexByMesh(verts, faces, uvsMap, matIds, mesh, matIdOffset = 0, transformVertex = None):
+def addRectVertex(  verts, faces, uvsMap, matIds, 
+                    addverts, adduvs, 
+                    uvScale = 1, matId = 0):
+
+    startId = len(verts)
+    face = []
+    currentFaceId = len(faces)
+    for i, v in enumerate(addverts):
+        verts.append(v)
+
+        vid = i+startId
+        face.append(vid)
+
+        adduv = adduvs[i]
+        uvsMap['%i_%i' % (currentFaceId, vid)] = (
+            adduv[0]*uvScale,
+            adduv[1]*uvScale
+        )
+        
+    faces.append(tuple(face))
+    matIds.append(matId)
+
+# 搭配 prepareAndCreateMesh 一起使用
+def addVertexByMesh(verts, faces, uvsMap, matIds, 
+                    mesh, matIdOffset = 0, transformVertex = None):
     currentFaceId = len(faces)
     currentVertId = len(verts)
     for m in mesh.data.polygons:
@@ -165,7 +192,6 @@ def prepareAndCreateMesh(name):
                 uv = uvsMap['%i_%i' % (face.index, vert_idx)]
                 obj.data.uv_layers.active.data[loop_idx].uv = uv
             face.material_index = matIds[i]
-
         return obj
 
     return [ verts, faces, uvsMap, matIds, create ]
