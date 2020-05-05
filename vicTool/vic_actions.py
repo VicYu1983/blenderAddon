@@ -44,7 +44,9 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
         col.operator(ProceduralLantern.vic_procedural_lantern_proxy.bl_idname)
         col.operator(ProceduralLantern.vic_procedural_lantern_connect.bl_idname)
         col.operator(ProceduralLantern.vic_procedural_lantern.bl_idname)
-        col.operator(ProceduralLantern.vic_procedural_lantern_life.bl_idname)
+
+        wm = context.window_manager
+        col.prop(wm, 'vic_procedural_lantern_life', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
 
         col.label(text='Drag Effect')
         col.operator(HandDrag.vic_hand_drag.bl_idname)
@@ -72,7 +74,6 @@ classes = (
     ProceduralLantern.vic_procedural_lantern_proxy,
     ProceduralLantern.vic_procedural_lantern_connect,
     ProceduralLantern.vic_procedural_lantern,
-    ProceduralLantern.vic_procedural_lantern_life,
     LineAlign.vic_line_align
 )
 def register():

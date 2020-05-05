@@ -84,26 +84,14 @@ class vic_procedural_lantern(bpy.types.Operator):
     def execute(self, context):
         self.updateMesh()
         return {'FINISHED'}
-
-        # context.window_manager.modal_handler_add(self)
-        # return {'RUNNING_MODAL'}
         
-
     def getCurve(self, index, segment, gravity):
         return (1-pow((abs(index - segment/2)/(segment/2)), 2)) * gravity
 
-    # def modal(self, context, event):
-        
-    #     print("MODAL")
-        
-    #     if event.type in {'RIGHTMOUSE', 'ESC'}:
-    #         print("END")
-    #         return {'CANCELLED'}
-    #     self.updateMesh()
-
-    #     return {'RUNNING_MODAL'}
-
     def updateMesh(self):
+
+        if "LanternDataStorage" not in bpy.data.objects.keys():
+            return
 
         mats = None
         if "Ropes" in bpy.data.objects.keys():
@@ -252,35 +240,32 @@ class vic_procedural_lantern(bpy.types.Operator):
             for mat in mats:
                 obj.data.materials.append(mat)
 
-        # mergeOverlayVertex(obj)
-
-        # bpy.ops.object.editmode_toggle()
-        # bpy.ops.mesh.faces_shade_smooth()
-        # bpy.ops.object.editmode_toggle()
-
-        # bpy.ops.object.select_all(action='DESELECT')
+def finishEdit():
+    if "Ropes" in bpy.data.objects.keys():
+        obj = bpy.data.objects["Ropes"]
+        obj.select_set(True)
+        activeObject(obj)
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        bpy.ops.mesh.faces_shade_smooth()
+        bpy.ops.object.editmode_toggle() 
+        bpy.ops.object.select_all(action='DESELECT')
 
 def updateMesh(scene):
-    print(scene.frame_current)
-    
-    if scene.frame_current % 1 == 0:
-        time.sleep(.01)
-        bpy.ops.vic.vic_procedural_lantern()
+    bpy.ops.vic.vic_procedural_lantern()
 
-class vic_procedural_lantern_life(bpy.types.Operator):
-    bl_idname = "vic.vic_procedural_lantern_life"
-    bl_label = "Live Edit"
-
-    def execute(self, context):
+def invokeLiveEdit(self, context):
+    if context.window_manager.vic_procedural_lantern_life:
         bpy.ops.screen.animation_play()
-        # if updateMesh in bpy.app.handlers.frame_change_post:
-            # bpy.app.handlers.frame_change_post.remove(updateMesh)
-        bpy.app.handlers.frame_change_post.clear()
-        # try:
-        #     bpy.app.handlers.frame_change_post.remove(updateMesh)
-        #     print("delte")
-        # except:
-        #     print("not in")
+        if updateMesh in bpy.app.handlers.frame_change_post:
+            bpy.app.handlers.frame_change_post.remove(updateMesh)
         bpy.app.handlers.frame_change_post.append(updateMesh)
+    else:
+        bpy.ops.screen.animation_cancel()
+        bpy.app.handlers.frame_change_post.remove(updateMesh)
+        finishEdit()
 
-        return {'FINISHED'}
+bpy.types.WindowManager.vic_procedural_lantern_life =   bpy.props.BoolProperty(
+                                                        default = False,
+                                                        update = invokeLiveEdit)
