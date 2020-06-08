@@ -1,8 +1,6 @@
 # VicTool
 
-## 2.8 已經可以使用了，有些比較不成熟的功能先不實裝
-
-## 2.79 的連接改到 https://1drv.ms/u/s!Apea4elXUnuxhJIhENBdzd0qdQY1PQ
+## 2.79 的連接改到 https://1drv.ms/u/s!Apea4elXUnuxhJIhENBdzd0qdQY1PQ (不再更新)
 
 ## 安裝方法
 
@@ -30,13 +28,19 @@
 
 快速創建有mirror modifier並切一半的立方體，如果覺得每次拉模型前都要做一樣的事很煩，就可以試試這個功能。
 
+![Alt text](/imgs/CreateMirrorCube.gif)
+
 ### Create Camera Target
 
 快速創建look at modifier並新增目標物件。方便快速的設定需要面向對像的物件。
 
+![Alt text](/imgs/CreateLookAt.gif)
+
 ### Particle To Rigidbodys
 
 可以建立剛體物理的粒子效果
+
+![Alt text](/imgs/particlesToRigidbody.gif)
 
 以下是介紹影片
 
@@ -53,6 +57,18 @@
 程序化拱橋
 
 ![Alt text](/imgs/blenderBridge.gif)
+
+### Lantern Generator
+
+程序化燈籠
+
+![Alt text](/imgs/createProxy.gif)
+
+![Alt text](/imgs/createConnect.gif)
+
+![Alt text](/imgs/createLantern.gif)
+
+![Alt text](/imgs/changeRope.gif)
 
 ### Select By Name
 
