@@ -62,11 +62,19 @@
 
 程序化燈籠
 
+一、創建生成點
+
 ![Alt text](/imgs/createProxy.gif)
+
+二、創建繩子
 
 ![Alt text](/imgs/createConnect.gif)
 
+三、創建燈籠
+
 ![Alt text](/imgs/createLantern.gif)
+
+四、修改繩子的生成
 
 ![Alt text](/imgs/changeRope.gif)
 
