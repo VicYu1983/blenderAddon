@@ -78,6 +78,10 @@
 
 ![Alt text](/imgs/changeRope.gif)
 
+基本教學
+
+![Alt text](/imgs/lanternTutorial.gif)
+
 ### Select By Name
 
 快速選取有同樣名稱的物件
