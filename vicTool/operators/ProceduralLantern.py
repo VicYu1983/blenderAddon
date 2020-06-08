@@ -88,7 +88,7 @@ class vic_procedural_lantern_connect(bpy.types.Operator):
 
 class vic_procedural_lantern(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_lantern"
-    bl_label = "Generate Lantern"
+    bl_label = "Update"
 
     def execute(self, context):
         self.updateMesh()
