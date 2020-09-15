@@ -203,3 +203,38 @@ def mergeOverlayVertex(obj):
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.mesh.remove_doubles()
     bpy.ops.object.editmode_toggle()    
+
+# example:
+# curve = bpy.data.objects["BezierCurve"]
+# total_length, matrices = getCurvePosAndLength(curve, 10)
+def getCurvePosAndLength(curve, count):    
+    bpy.ops.object.empty_add(type='ARROWS')
+    bpy.ops.object.location_clear()
+    bpy.ops.object.constraint_add(type='FOLLOW_PATH')
+    constraint = bpy.context.object.constraints["Follow Path"]
+    constraint.target = curve
+    constraint.forward_axis = 'FORWARD_X'
+    constraint.up_axis = 'UP_Z'
+    constraint.use_fixed_location = True
+    constraint.use_curve_follow = True
+
+    total_length = 0
+    current_pos = None
+    matrices = []
+    for i in range(count+1):
+        offset = i / count
+        constraint.offset_factor = offset
+        
+        # update matrix while python running
+        bpy.ops.wm.redraw_timer(type='DRAW', iterations=1)
+        
+        world_mat = bpy.context.object.matrix_world.copy()
+        world_pos = world_mat.to_translation()
+        matrices.append( world_mat )
+        
+        if i == 0: pass
+        else: total_length += (world_pos - current_pos).length
+        
+        current_pos = world_pos
+    bpy.ops.object.delete()
+    return total_length, matrices
