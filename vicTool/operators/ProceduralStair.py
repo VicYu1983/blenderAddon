@@ -16,8 +16,6 @@ from ..vic_tools import (
     activeObject,
     copyObject,
     focusObject,
-    addVertexAndFaces,
-    addVertexByMesh,
     prepareAndCreateMesh
 )
 

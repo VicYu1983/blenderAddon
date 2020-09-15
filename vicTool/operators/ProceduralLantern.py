@@ -56,7 +56,6 @@ class vic_procedural_lantern_connect(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.vic.vic_procedural_lantern_manager()
-
         objs = [o for o in getSelectedWithOrder() if "ProxyData" in o.name]
         
         if len(objs) >= 2:
@@ -113,10 +112,17 @@ class vic_procedural_lantern(bpy.types.Operator):
         if "LanternManager" not in bpy.data.objects.keys():
             return
 
+        current_focus = bpy.context.object
         mats = None
         if "Ropes" in bpy.data.objects.keys():
             mats = bpy.data.objects["Ropes"].data.materials
-            bpy.ops.object.delete({"selected_objects": [bpy.data.objects["Ropes"]] + list(bpy.data.objects["Ropes"].children)})
+            for o in [bpy.data.objects["Ropes"]] + list(bpy.data.objects["Ropes"].children):
+                focusObject(o)
+                bpy.ops.object.delete()
+
+        if current_focus: 
+            if "Ropes" not in current_focus.name:
+                focusObject(current_focus)
 
         lanternManager = bpy.data.objects["LanternManager"]
         rope = lanternManager["Rope"]
@@ -129,11 +135,7 @@ class vic_procedural_lantern(bpy.types.Operator):
         lanternSegment = lanternManager["LanternSegment"]
         lanternRandomOffset = lanternManager["LanternRandomOffset"]
 
-        meshData = prepareAndCreateMesh("Ropes")
-        verts = meshData[0]
-        faces = meshData[1]
-        uvsMap = meshData[2]
-        matIds = meshData[3]
+        (obj, update, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("Ropes")
 
         lanterns = []
         connects = [o for o in bpy.data.objects if "ConnectData" in o.name]
@@ -266,7 +268,6 @@ class vic_procedural_lantern(bpy.types.Operator):
                             uvy = segheight * i
                             uvheight = uvy + segheight
                             addRectVertex(
-                                verts, faces, uvsMap, matIds,
                                 [shapeOffset[i+1], shapeOffset[i], nextShapeOffset[i], nextShapeOffset[i+1]], [(0,uvheight), (0,uvy), (1,uvy), (1,uvheight)]
                             )
 
@@ -281,7 +282,7 @@ class vic_procedural_lantern(bpy.types.Operator):
                     lenternPoint = self.getSegment(pWorldLocation, nextPWorldLocation, seg, cgravity, clanternRandomOffset)[1:-1]
                     for i, p in enumerate(lenternPoint):
                         # 實時預覽時不要產生真的燈籠，節省效能
-                        if bpy.context.window_manager.vic_procedural_lantern_life:
+                        if bpy.context.window_manager.vic_procedural_lantern_live:
                             copyFrom = bpy.data.objects["LanternManager"]
                         else:
 
@@ -301,7 +302,7 @@ class vic_procedural_lantern(bpy.types.Operator):
                         newcopy.location.z = p.z
                         lanterns.append(newcopy)
 
-        obj = meshData[4]()
+        update()
         if rope:         
             if mats is not None:
                 for mat in mats:
@@ -312,7 +313,7 @@ class vic_procedural_lantern(bpy.types.Operator):
         lanterns = None
 
         # 非實時預覽時，執行完就合并多餘的點。實時預覽時，等結束預覽再合并
-        if not bpy.context.window_manager.vic_procedural_lantern_life:
+        if not bpy.context.window_manager.vic_procedural_lantern_live:
             finishEdit()
 
         
@@ -336,7 +337,7 @@ def updateMesh(scene):
     bpy.ops.vic.vic_procedural_lantern()
 
 def invokeLiveEdit(self, context):
-    if context.window_manager.vic_procedural_lantern_life:
+    if context.window_manager.vic_procedural_lantern_live:
         bpy.ops.screen.animation_play()
         if updateMesh in bpy.app.handlers.frame_change_post:
             bpy.app.handlers.frame_change_post.remove(updateMesh)
@@ -346,6 +347,6 @@ def invokeLiveEdit(self, context):
         bpy.app.handlers.frame_change_post.remove(updateMesh)
         updateMesh(None)
 
-bpy.types.WindowManager.vic_procedural_lantern_life =   bpy.props.BoolProperty(
+bpy.types.WindowManager.vic_procedural_lantern_live =   bpy.props.BoolProperty(
                                                         default = False,
                                                         update = invokeLiveEdit)
