@@ -112,7 +112,10 @@ class vic_procedural_lantern(bpy.types.Operator):
         if "LanternManager" not in bpy.data.objects.keys():
             return
 
-        current_focus = bpy.context.object
+        current_focus = None
+        if bpy.context.object and "Ropes" not in bpy.context.object.name:
+            current_focus = bpy.context.object
+
         mats = None
         if "Ropes" in bpy.data.objects.keys():
             mats = bpy.data.objects["Ropes"].data.materials
@@ -120,9 +123,7 @@ class vic_procedural_lantern(bpy.types.Operator):
                 focusObject(o)
                 bpy.ops.object.delete()
 
-        if current_focus: 
-            if "Ropes" not in current_focus.name:
-                focusObject(current_focus)
+        if current_focus: focusObject(current_focus)
 
         lanternManager = bpy.data.objects["LanternManager"]
         rope = lanternManager["Rope"]
