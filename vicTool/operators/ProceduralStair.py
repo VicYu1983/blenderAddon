@@ -208,8 +208,8 @@ class vic_procedural_stair(bpy.types.Operator):
                 return newpos
             return transformWall
         for p in piles:
-            addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 3, cacheParam(p, self.width/2-self.wallOffsetY))
-            addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 3, cacheParam(p, -self.width/2+self.wallOffsetY))
+            self.addVertexByMesh(mesh, 3, cacheParam(p, self.width/2-self.wallOffsetY))
+            self.addVertexByMesh(mesh, 3, cacheParam(p, -self.width/2+self.wallOffsetY))
             # self.createPileMesh(mesh, p, self.width/2-self.wallOffsetY)
             # self.createPileMesh(mesh, p, -self.width/2+self.wallOffsetY)
 
@@ -244,8 +244,8 @@ class vic_procedural_stair(bpy.types.Operator):
             for i in range(count):
                 wallPos = wallSingle * (i + .5)
 
-                addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 2, cacheParam(scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY))
-                addVertexByMesh(self.verts, self.faces, self.uvsMap, self.matIds, mesh, 2, cacheParam(scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY))
+                self.addVertexByMesh(mesh, 2, cacheParam(scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY))
+                self.addVertexByMesh(mesh, 2, cacheParam(scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY))
 
                 # self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, self.width/2-self.wallOffsetY)
                 # self.createOneWall(mesh, scaleFactor, tanRadian, startPos, wallPos, -self.width/2+self.wallOffsetY)
@@ -279,11 +279,8 @@ class vic_procedural_stair(bpy.types.Operator):
 
     def execute(self, context):
 
-        meshData = prepareAndCreateMesh("Stair")
-        self.verts = meshData[0]
-        self.faces = meshData[1]
-        self.uvsMap = meshData[2]
-        self.matIds = meshData[3]
+        (obj, update, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("Stair")
+        self.addVertexByMesh = addVertexByMesh
 
         # unselect all of object, and then can join my own object
         for obj in bpy.context.view_layer.objects:
@@ -317,14 +314,12 @@ class vic_procedural_stair(bpy.types.Operator):
         lastVertex = line[len(line)-1]
         # 階梯的點及uv
         addVertexAndFaces(
-            self.verts, self.faces, self.uvsMap, self.matIds,
             line, (0, self.width, 0), 
             uv, (-self.stairUvScaleX,0), 
             1, 0, flip=True)
 
         # 背面的點及uv
         addVertexAndFaces(
-            self.verts, self.faces, self.uvsMap, self.matIds,
             [lastVertex, (lastVertex[0],lastVertex[1],0)], (0, self.width, 0), 
             [(0,lastVertex[2]),(0,0)], (self.width,0),
             self.stairSideUvScale, 1, flip=True)
@@ -332,7 +327,6 @@ class vic_procedural_stair(bpy.types.Operator):
         # 側墻的點及uv
         for i in range(self.count):
             addVertexAndFaces(
-                self.verts, self.faces, self.uvsMap, self.matIds,
                 [(i*stepDepth,-x, i*stepHeight+stepHeight),
                 (i*stepDepth,-x,0),
                 (i*stepDepth,x,0),
@@ -367,7 +361,7 @@ class vic_procedural_stair(bpy.types.Operator):
                 if pileMesh.type == 'MESH':
                     self.createPile(pileMesh, piles)
 
-        obj = meshData[4]()
+        update()
         self.assignMaterial(obj, wallMesh, pileMesh)
 
         activeObject(obj)
