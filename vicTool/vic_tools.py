@@ -26,6 +26,9 @@ def addObject( obj ):
 def activeObject( obj ):
     bpy.context.view_layer.objects.active = obj
 
+def updateMatrix():
+    bpy.context.view_layer.update()
+
 def copyObject(obj, sameData = False):
     newobj = obj.copy()
     if not sameData:
@@ -80,6 +83,14 @@ def prepareAndCreateMesh(name):
     mesh = bpy.data.meshes.new(name)
     obj = bpy.data.objects.new(name, mesh)
     addObject(obj)
+
+    def clear():
+        nonlocal verts, faces, uvsMap, matIds, mesh
+        verts = []
+        faces = []
+        uvsMap = {}
+        matIds = []
+        mesh.clear_geometry()
     
     # 給定一條綫上的點，再給定一個偏移向量，用程式產生偏移過後的第二條綫段的點
     # 用兩條綫上的點來產生面
@@ -183,7 +194,6 @@ def prepareAndCreateMesh(name):
             verts.append( newpos )
             
     def update():
-        mesh.clear_geometry()
         mesh.from_pydata(verts, [], faces)
 
         # assign uv
@@ -194,7 +204,7 @@ def prepareAndCreateMesh(name):
                 obj.data.uv_layers.active.data[loop_idx].uv = uv
             face.material_index = matIds[i]
 
-    return (obj, update, addRectVertex, addVertexAndFaces, addVertexByMesh)
+    return (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh)
 
 def mergeOverlayVertex(obj):
     obj.select_set(True)
@@ -208,6 +218,10 @@ def mergeOverlayVertex(obj):
 # curve = bpy.data.objects["BezierCurve"]
 # total_length, matrices = getCurvePosAndLength(curve, 10)
 def getCurvePosAndLength(curve, count):    
+    if bpy.context.mode != 'OBJECT': return (0, [])
+
+    current_focus = bpy.context.object
+    
     bpy.ops.object.empty_add(type='ARROWS')
     bpy.ops.object.location_clear()
     bpy.ops.object.constraint_add(type='FOLLOW_PATH')
@@ -221,12 +235,13 @@ def getCurvePosAndLength(curve, count):
     total_length = 0
     current_pos = None
     matrices = []
+
     for i in range(count+1):
         offset = i / count
         constraint.offset_factor = offset
-        
+
         # update matrix while python running
-        bpy.ops.wm.redraw_timer(type='DRAW', iterations=1)
+        updateMatrix()
         
         world_mat = bpy.context.object.matrix_world.copy()
         world_pos = world_mat.to_translation()
@@ -236,5 +251,8 @@ def getCurvePosAndLength(curve, count):
         else: total_length += (world_pos - current_pos).length
         
         current_pos = world_pos
+    
     bpy.ops.object.delete()
+
+    if current_focus: focusObject(current_focus)
     return total_length, matrices

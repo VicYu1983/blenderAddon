@@ -43,14 +43,14 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
 
         col.label(text='Stair Generator')
         col.operator(ps.vic_procedural_stair_proxy.bl_idname)
+        col.prop(context.window_manager, 'vic_procedural_stair_proxy_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
 
         col.label(text='Lantern Generator')
         col.operator(ProceduralLantern.vic_procedural_lantern_proxy.bl_idname)
         col.operator(ProceduralLantern.vic_procedural_lantern_connect.bl_idname)
         col.operator(ProceduralLantern.vic_procedural_lantern.bl_idname)
 
-        wm = context.window_manager
-        col.prop(wm, 'vic_procedural_lantern_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
+        col.prop(context.window_manager, 'vic_procedural_lantern_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
 
         col.label(text='Drag Effect')
         col.operator(HandDrag.vic_hand_drag.bl_idname)

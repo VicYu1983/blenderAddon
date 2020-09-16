@@ -2,6 +2,15 @@ import bpy
 from ..vic_tools import *
 from mathutils import *
 
+
+caches = {
+    "curve":None,
+    "obj":None,
+    "update":None,
+    "clear":None,
+    "addRectVertex":None
+}
+
 def createStairManager():
     for obj in bpy.data.objects:
         if obj.name == "StairManager":
@@ -12,13 +21,16 @@ def createStairManager():
 
 def createStairProxy():
 
-    ctx = bpy.context
-    if ctx.object.type != 'CURVE': return
-
-    (obj, update, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("test")
-
-    curve = ctx.object
-    length, matrices = getCurvePosAndLength(curve, 80)
+    curve = caches["curve"]
+    update = caches["update"]
+    clear = caches["clear"]
+    addRectVertex = caches["addRectVertex"]
+    
+    length, matrices = getCurvePosAndLength(curve, 5)
+    if length == 0: return
+    
+    # reset mesh data
+    clear()
 
     pts = (Vector((0,1,0)), Vector((0,-1,0)))
     for i, mat in enumerate(matrices):
@@ -91,5 +103,51 @@ class vic_procedural_stair_proxy(bpy.types.Operator):
     bl_label = "Create Stair Proxy"
 
     def execute(self, context):
+        ctx = bpy.context
+        if not ctx.object or ctx.object.type != 'CURVE': 
+            self.report({'INFO'}, "Please select at least one CURVE object.")
+            return {'FINISHED'}
+        startEdit()
         createStairProxy()
         return {'FINISHED'}
+
+def updateMesh(scene):
+    updateMatrix()
+    createStairProxy()
+
+def startEdit():
+    ctx = bpy.context
+    if not ctx.object or ctx.object.type != 'CURVE': return
+
+    curve = ctx.object
+    caches["curve"] = curve
+
+    if "Mesh" in curve: 
+        mesh = curve["Mesh"]
+        if mesh in bpy.data.objects: 
+            focusObject(bpy.data.objects[mesh])
+            bpy.ops.object.delete()
+
+    (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("test")
+    caches["obj"] = obj
+    caches["update"] = update
+    caches["addRectVertex"] = addRectVertex
+    caches["clear"] = clear
+    
+    addProps(curve, "Mesh", obj.name, True)
+
+def invokeLiveEdit(self, context):
+    if context.window_manager.vic_procedural_stair_proxy_live:
+        startEdit()
+        bpy.ops.screen.animation_play()
+        if updateMesh in bpy.app.handlers.frame_change_post:
+            bpy.app.handlers.frame_change_post.remove(updateMesh)
+        bpy.app.handlers.frame_change_post.append(updateMesh)
+    else:
+        bpy.ops.screen.animation_cancel()
+        bpy.app.handlers.frame_change_post.remove(updateMesh)
+        updateMesh(None)
+
+bpy.types.WindowManager.vic_procedural_stair_proxy_live =   bpy.props.BoolProperty(
+                                                            default = False,
+                                                            update = invokeLiveEdit)

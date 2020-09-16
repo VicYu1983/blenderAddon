@@ -279,7 +279,7 @@ class vic_procedural_stair(bpy.types.Operator):
 
     def execute(self, context):
 
-        (obj, update, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("Stair")
+        (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("Stair")
         self.addVertexByMesh = addVertexByMesh
 
         # unselect all of object, and then can join my own object
