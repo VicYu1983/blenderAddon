@@ -25,14 +25,21 @@ def createStairProxy():
     update = caches["update"]
     clear = caches["clear"]
     addRectVertex = caches["addRectVertex"]
+
+    curve["Width"] = bpy.context.window_manager.vic_procedural_stair_proxy_width
+    curve["Step"] = bpy.context.window_manager.vic_procedural_stair_proxy_step
+
+    if curve["Width"] <= 0: return
+    width = curve["Width"]
+    step = curve["Step"]
     
-    length, matrices = getCurvePosAndLength(curve, 5)
+    length, matrices = getCurvePosAndLength(curve, step)
     if length == 0: return
     
     # reset mesh data
     clear()
 
-    pts = (Vector((0,1,0)), Vector((0,-1,0)))
+    pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
     for i, mat in enumerate(matrices):
         curr_pts = []
         for pt in pts:
@@ -112,7 +119,6 @@ class vic_procedural_stair_proxy(bpy.types.Operator):
         return {'FINISHED'}
 
 def updateMesh(scene):
-    updateMatrix()
     createStairProxy()
 
 def startEdit():
@@ -135,7 +141,12 @@ def startEdit():
     caches["clear"] = clear
     
     addProps(curve, "Mesh", obj.name, True)
+    addProps(curve, "Width", 1)
+    addProps(curve, "Step", 2)
 
+    bpy.context.window_manager.vic_procedural_stair_proxy_width = curve["Width"]
+    bpy.context.window_manager.vic_procedural_stair_proxy_step = curve["Step"]
+    
 def invokeLiveEdit(self, context):
     if context.window_manager.vic_procedural_stair_proxy_live:
         startEdit()
@@ -151,3 +162,14 @@ def invokeLiveEdit(self, context):
 bpy.types.WindowManager.vic_procedural_stair_proxy_live =   bpy.props.BoolProperty(
                                                             default = False,
                                                             update = invokeLiveEdit)
+
+bpy.types.WindowManager.vic_procedural_stair_proxy_width = bpy.props.FloatProperty(
+                                                            name='Width',
+                                                            default=.5,
+                                                            min=0.01)
+
+bpy.types.WindowManager.vic_procedural_stair_proxy_step = bpy.props.IntProperty(
+                                                            name='Step',
+                                                            default=5,
+                                                            min=2,
+                                                            step=1)

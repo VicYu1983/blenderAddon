@@ -10,7 +10,7 @@ from .operators import (
     ProceduralStair,
     ProceduralBridge,
     ProceduralLantern,
-    ps,
+    ProceduralSplineStair,
     LineAlign
 )
 
@@ -42,8 +42,10 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
         col.operator(ProceduralBridge.vic_procedural_bridge.bl_idname)
 
         col.label(text='Stair Generator')
-        col.operator(ps.vic_procedural_stair_proxy.bl_idname)
+        col.operator(ProceduralSplineStair.vic_procedural_stair_proxy.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_proxy_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
+        col.prop(context.window_manager, 'vic_procedural_stair_proxy_width')
+        col.prop(context.window_manager, 'vic_procedural_stair_proxy_step')
 
         col.label(text='Lantern Generator')
         col.operator(ProceduralLantern.vic_procedural_lantern_proxy.bl_idname)
@@ -74,9 +76,7 @@ classes = (
     MeshFlatten.vic_make_meshs_plane,
     ProceduralStair.vic_procedural_stair,
     ProceduralBridge.vic_procedural_bridge,
-
-    ps.vic_procedural_stair_proxy,
-
+    ProceduralSplineStair.vic_procedural_stair_proxy,
     ProceduralLantern.vic_procedural_lantern_manager,
     ProceduralLantern.vic_procedural_lantern_proxy,
     ProceduralLantern.vic_procedural_lantern_connect,
