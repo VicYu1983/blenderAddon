@@ -9,8 +9,6 @@ from .operators import (
     MeshFlatten,
     ProceduralStair,
     ProceduralBridge,
-    ProceduralLantern,
-    ProceduralSplineStair,
     LineAlign
 )
 
@@ -76,11 +74,6 @@ classes = (
     MeshFlatten.vic_make_meshs_plane,
     ProceduralStair.vic_procedural_stair,
     ProceduralBridge.vic_procedural_bridge,
-    ProceduralSplineStair.vic_procedural_stair_proxy,
-    ProceduralLantern.vic_procedural_lantern_manager,
-    ProceduralLantern.vic_procedural_lantern_proxy,
-    ProceduralLantern.vic_procedural_lantern_connect,
-    ProceduralLantern.vic_procedural_lantern,
     LineAlign.vic_line_align
 )
 def register():
