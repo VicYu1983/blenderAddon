@@ -8,7 +8,8 @@ caches = {
     "obj":None,
     "update":None,
     "clear":None,
-    "addRectVertex":None
+    "addRectVertex":None,
+    "pilePoints":None
 }
 
 def createStairManager():
@@ -25,6 +26,7 @@ def createStairProxy():
     update = caches["update"]
     clear = caches["clear"]
     addRectVertex = caches["addRectVertex"]
+    pilePoints = caches["pilePoints"]
 
     curve["Width"] = bpy.context.window_manager.vic_procedural_stair_update_width
     curve["Step"] = bpy.context.window_manager.vic_procedural_stair_update_step
@@ -43,6 +45,10 @@ def createStairProxy():
     # reset mesh data
     clear()
 
+    last_pts = None
+    last_height = 0
+    last_isStep = False
+
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
     for i, mat in enumerate(matrices):
         curr_pts = []
@@ -58,15 +64,19 @@ def createStairProxy():
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-            # bpy.ops.object.empty_add(type='ARROWS')
-            # ctx.object.location = pos
-            # ctx.object.name = 'aaaa'
+        pilePoints += curr_pts
+
+        # 第二步開始才有足夠的資訊來計算
         if i > 0: 
             step_pt1 = curr_pts[1].copy()
             step_pt0 = curr_pts[0].copy()
 
+            current_isStep = False
+
             # 如果階梯間的高度超過設定的閾值，就產生階梯
-            if abs(curr_pts[0].z - last_pts[0].z) > step_threshold:
+            current_height = curr_pts[0].z - last_pts[0].z
+            if abs(current_height) > step_threshold:
+                current_isStep = True
 
                 # 注意這邊的設定也會影響樓梯面的生成
                 step_pt1.z = last_pts[1].z
@@ -90,9 +100,35 @@ def createStairProxy():
             side_pt3 = step_pt1.copy()
             side_pt3.z = ground
 
-            # 樓梯左右側面
-            addRectVertex((last_pts[0],step_pt0, side_pt1, side_pt0), ((0,0),(0,0),(0,0),(0,0)))
-            addRectVertex((last_pts[1],step_pt1, side_pt3, side_pt2), ((0,0),(0,0),(0,0),(0,0)))
+            # 樓梯左側面
+            if current_height < 0:
+                addRectVertex((last_pts[0],step_pt0, curr_pts[0]), ((0,0),(0,0),(0,0),(0,0)))
+                addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), ((0,0),(0,0),(0,0),(0,0)))
+            else:
+                if last_isStep:
+                    step_connect_pt = last_pts[0] + Vector((0,0,-last_height))
+                else:
+                    step_connect_pt = last_pts[0]
+
+                addRectVertex((last_pts[0],step_pt0, step_connect_pt), ((0,0),(0,0),(0,0),(0,0)))
+                addRectVertex((step_connect_pt, step_pt0, side_pt1, side_pt0), ((0,0),(0,0),(0,0),(0,0)))
+            
+
+            # 樓梯右側面
+            if current_height < 0:
+                addRectVertex((last_pts[1],step_pt1, curr_pts[1]), ((0,0),(0,0),(0,0),(0,0)))
+                addRectVertex((last_pts[1],curr_pts[1], side_pt3, side_pt2), ((0,0),(0,0),(0,0),(0,0)))
+            else:
+                if last_isStep:
+                    step_connect_pt = last_pts[1] + Vector((0,0,-last_height))
+                else:
+                    step_connect_pt = last_pts[1]
+
+                addRectVertex((last_pts[1],step_pt1, step_connect_pt), ((0,0),(0,0),(0,0),(0,0)))
+                addRectVertex((step_connect_pt, step_pt1, side_pt3, side_pt2), ((0,0),(0,0),(0,0),(0,0)))
+                
+            last_height = current_height
+            last_isStep = current_isStep
         last_pts = curr_pts
 
     update()
@@ -112,6 +148,7 @@ def createStairProxy():
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create Stair Proxy"
+    meshName = "vic_procedural_stair_update_mesh"
 
     def execute(self, context):
         ctx = bpy.context
@@ -120,6 +157,7 @@ class vic_procedural_stair_update(bpy.types.Operator):
             return {'FINISHED'}
         startEdit()
         createStairProxy()
+        endEdit()
         return {'FINISHED'}
 
 def updateMesh(scene):
@@ -138,11 +176,13 @@ def startEdit():
             focusObject(bpy.data.objects[mesh])
             bpy.ops.object.delete()
 
-    (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("test")
+    meshName = vic_procedural_stair_update.meshName
+    (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh(meshName)
     caches["obj"] = obj
     caches["update"] = update
     caches["addRectVertex"] = addRectVertex
     caches["clear"] = clear
+    caches["pilePoints"] = []
     
     addProps(curve, "Mesh", obj.name, True)
     addProps(curve, "Width", 1)
@@ -154,7 +194,20 @@ def startEdit():
     bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
     bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
     bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
-    
+
+def endEdit():
+    if vic_procedural_stair_update.meshName in bpy.data.objects.keys():
+        obj = bpy.data.objects[vic_procedural_stair_update.meshName]
+        obj.select_set(True)
+        activeObject(obj)
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles()
+        # bpy.ops.mesh.faces_shade_smooth()
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.editmode_toggle() 
+        bpy.ops.object.select_all(action='DESELECT')
+
 def invokeLiveEdit(self, context):
     if context.window_manager.vic_procedural_stair_update_live:
         startEdit()
@@ -166,6 +219,7 @@ def invokeLiveEdit(self, context):
         bpy.ops.screen.animation_cancel()
         bpy.app.handlers.frame_change_post.remove(updateMesh)
         updateMesh(None)
+        endEdit()
 
 bpy.types.WindowManager.vic_procedural_stair_update_live =   bpy.props.BoolProperty(
                                                             default = False,
