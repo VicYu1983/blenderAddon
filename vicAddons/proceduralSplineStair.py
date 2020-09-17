@@ -28,10 +28,14 @@ def createStairProxy():
 
     curve["Width"] = bpy.context.window_manager.vic_procedural_stair_update_width
     curve["Step"] = bpy.context.window_manager.vic_procedural_stair_update_step
+    curve["Step_Threshold"] = bpy.context.window_manager.vic_procedural_stair_update_step_threshold
+    curve["Ground"] = bpy.context.window_manager.vic_procedural_stair_update_ground
 
     if curve["Width"] <= 0: return
     width = curve["Width"]
     step = curve["Step"]
+    step_threshold = curve["Step_Threshold"]
+    ground = curve["Ground"]
     
     length, matrices = getCurvePosAndLength(curve, step)
     if length == 0: return
@@ -62,7 +66,7 @@ def createStairProxy():
             step_pt0 = curr_pts[0].copy()
 
             # 如果階梯間的高度超過設定的閾值，就產生階梯
-            if abs(curr_pts[0].z - last_pts[0].z) > .2:
+            if abs(curr_pts[0].z - last_pts[0].z) > step_threshold:
 
                 # 注意這邊的設定也會影響樓梯面的生成
                 step_pt1.z = last_pts[1].z
@@ -75,16 +79,16 @@ def createStairProxy():
             addRectVertex((last_pts[0],last_pts[1], step_pt1, step_pt0), ((0,0),(0,0),(0,0),(0,0)))
 
             side_pt0 = last_pts[0].copy()
-            side_pt0.z = -10
+            side_pt0.z = ground
 
             side_pt1 = step_pt0.copy()
-            side_pt1.z = -10
+            side_pt1.z = ground
 
             side_pt2 = last_pts[1].copy()
-            side_pt2.z = -10
+            side_pt2.z = ground
 
             side_pt3 = step_pt1.copy()
-            side_pt3.z = -10
+            side_pt3.z = ground
 
             # 樓梯左右側面
             addRectVertex((last_pts[0],step_pt0, side_pt1, side_pt0), ((0,0),(0,0),(0,0),(0,0)))
@@ -143,9 +147,13 @@ def startEdit():
     addProps(curve, "Mesh", obj.name, True)
     addProps(curve, "Width", 1)
     addProps(curve, "Step", 2)
+    addProps(curve, "Step_Threshold", .2)
+    addProps(curve, "Ground", -1)
 
     bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
     bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
+    bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
+    bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
     
 def invokeLiveEdit(self, context):
     if context.window_manager.vic_procedural_stair_update_live:
@@ -168,11 +176,20 @@ bpy.types.WindowManager.vic_procedural_stair_update_width = bpy.props.FloatPrope
                                                             default=.5,
                                                             min=0.01)
 
+bpy.types.WindowManager.vic_procedural_stair_update_step_threshold = bpy.props.FloatProperty(
+                                                            name='Step Threshold',
+                                                            default=.2,
+                                                            min=0.0)
+
 bpy.types.WindowManager.vic_procedural_stair_update_step = bpy.props.IntProperty(
                                                             name='Step',
                                                             default=5,
                                                             min=2,
                                                             step=1)
+
+bpy.types.WindowManager.vic_procedural_stair_update_ground = bpy.props.FloatProperty(
+                                                            name='Ground',
+                                                            default=-1)                                                            
 
 class vic_procedural_stair_update_panel(bpy.types.Panel):
     bl_category = "Vic Addons"
@@ -187,6 +204,9 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.operator(vic_procedural_stair_update.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_ground')
+        
 
         
