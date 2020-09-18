@@ -55,10 +55,11 @@ def createStairProxy():
     last_isStep = False
 
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
+    pile_pts = (Vector((0,width/2 - .5,0)), Vector((0,-width/2 + .5,0)))
     for i, mat in enumerate(matrices):
         curr_pts = []
         pile_mats = []
-        for pt in pts:
+        for j, pt in enumerate(pts):
 
             # 只留下水平的旋轉（yaw），需要單位化，不然轉成矩陣的時候，會有拉扯
             hori_quat = mat.to_quaternion()
@@ -70,8 +71,13 @@ def createStairProxy():
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-            pile_mat = Matrix.Translation(hori_mat @ (pt + Vector((stepLength/2,0,0)))) @ hori_quat.to_matrix().to_4x4()
-            pile_mats.append(pile_mat)
+            if last_pts and i % 5 == 0:
+                pile_pos = hori_mat @ pile_pts[j]
+                last_pt = last_pts[j]
+                offset_pt = (pile_pos + last_pt) / 2
+                offset_pt.z = last_pt.z
+                pile_mat = Matrix.Translation(offset_pt) @ hori_quat.to_matrix().to_4x4()
+                pile_mats.append(pile_mat)
 
         pilePoints += pile_mats
 
