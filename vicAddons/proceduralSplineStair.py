@@ -26,7 +26,6 @@ def createStairProxy():
     update = caches["update"]
     clear = caches["clear"]
     addRectVertex = caches["addRectVertex"]
-    pilePoints = caches["pilePoints"]
 
     curve["Width"] = bpy.context.window_manager.vic_procedural_stair_update_width
     curve["Step"] = bpy.context.window_manager.vic_procedural_stair_update_step
@@ -34,18 +33,22 @@ def createStairProxy():
     curve["Ground"] = bpy.context.window_manager.vic_procedural_stair_update_ground
     curve["OnGround"] = bpy.context.window_manager.vic_procedural_stair_update_onGround
 
-    if curve["Width"] <= 0: return
     width = curve["Width"]
     step = curve["Step"]
     step_threshold = curve["Step_Threshold"]
     ground = curve["Ground"]
     onGround = curve["OnGround"]
+
+    if width <= 0 or step <= 0: return
     
     length, matrices = getCurvePosAndLength(curve, step)
     if length == 0: return
+
+    stepLength = length / step
     
     # reset mesh data
     clear()
+    pilePoints = []
 
     last_pts = None
     last_height = 0
@@ -54,6 +57,7 @@ def createStairProxy():
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
     for i, mat in enumerate(matrices):
         curr_pts = []
+        pile_mats = []
         for pt in pts:
 
             # 只留下水平的旋轉（yaw），需要單位化，不然轉成矩陣的時候，會有拉扯
@@ -66,7 +70,10 @@ def createStairProxy():
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-        pilePoints += curr_pts
+            pile_mat = Matrix.Translation(pos) @ hori_quat.to_matrix().to_4x4()
+            pile_mats.append(pile_mat)
+
+        pilePoints += pile_mats
 
         # 第二步開始才有足夠的資訊來計算
         if i > 0: 
@@ -140,23 +147,13 @@ def createStairProxy():
             last_isStep = current_isStep
         last_pts = curr_pts
 
+    caches["pilePoints"] = pilePoints
     update()
-    # createStairManager()
-    # proxys = [o for o in bpy.data.objects if "ProxyData" in o.name]
-    # currentId = -1
-    # for proxy in proxys:
-    #     if proxy["Id"] > currentId:
-    #         currentId = proxy["Id"]
-
-    # bpy.ops.object.empty_add(type='SPHERE')
-    # obj = bpy.context.object
-    # obj.name = "ProxyData"
-    # obj.parent = bpy.data.objects["StairManager"]
-    # addProps(obj, "Id", currentId+1)
 
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
-    bl_label = "Create Stair Proxy"
+    bl_label = "Create & Update"
+
     meshName = "vic_procedural_stair_update_mesh"
 
     def execute(self, context):
@@ -171,12 +168,23 @@ class vic_procedural_stair_update(bpy.types.Operator):
         focusObject(currentFocus)
         return {'FINISHED'}
 
+
+# class vic_procedural_stair_pile(bpy.types.Operator):
+#     bl_idname = "vic.vic_procedural_stair_pile"
+#     bl_label = "Create & Update Pile"
+
+#     def execute(self, context):
+#         return {'FINISHED'}
+
+
 def updateMesh(scene):
     createStairProxy()
 
 def startEdit():
     ctx = bpy.context
     if not ctx.object or ctx.object.type != 'CURVE': return
+
+    removePiles()
 
     curve = ctx.object
     caches["curve"] = curve
@@ -221,6 +229,26 @@ def endEdit():
         bpy.ops.object.editmode_toggle() 
         bpy.ops.object.select_all(action='DESELECT')
 
+        createPiles()
+
+def createPiles():
+    print("createPiles")
+
+    pilePoints = caches["pilePoints"]
+    parent = caches["obj"]
+
+    copyFrom = bpy.data.objects["Cylinder"]
+
+    for pp in pilePoints:
+        pileobj = copyObject(copyFrom, True)
+        pileobj.matrix_world = pp
+        pileobj.name = "pileObj"
+        pileobj.parent = parent
+        addObject(pileobj)
+
+def removePiles():
+    removeObjects([o for o in bpy.data.objects if "pileObj" in o.name])
+
 def invokeLiveEdit(self, context):
     if context.window_manager.vic_procedural_stair_update_live:
         startEdit()
@@ -233,6 +261,7 @@ def invokeLiveEdit(self, context):
         bpy.app.handlers.frame_change_post.remove(updateMesh)
         updateMesh(None)
         endEdit()
+        
 
 bpy.types.WindowManager.vic_procedural_stair_update_live =   bpy.props.BoolProperty(
                                                             default = False,
@@ -278,6 +307,10 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
         col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
         col.prop(context.window_manager, 'vic_procedural_stair_update_ground')
+
+        # col = layout.column(align=True)
+        # col.operator(vic_procedural_stair_pile.bl_idname)
+        
 
         
         

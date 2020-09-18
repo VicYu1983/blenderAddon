@@ -20,7 +20,6 @@ def copyToScene( prefab, sameData = False ):
     return obj
 
 def addObject( obj ):
-    #bpy.context.view_layer.active_layer_collection.collection.objects.link(obj)
     bpy.context.collection.objects.link(obj)
 
 def activeObject( obj ):
@@ -42,6 +41,13 @@ def focusObject(focusObj):
         obj.select_set(False)
     focusObj.select_set(True)
     activeObject(focusObj)
+
+def removeObjects(objs):
+    curr_focus = bpy.context.object
+    for obj in objs:
+        focusObject(obj)
+        bpy.ops.object.delete()
+    if curr_focus: focusObject(curr_focus)
 
 def addProps( target, name, value, override = False ):
     if not name in target or override:
