@@ -164,9 +164,11 @@ class vic_procedural_stair_update(bpy.types.Operator):
         if not ctx.object or ctx.object.type != 'CURVE': 
             self.report({'INFO'}, "Please select at least one CURVE object.")
             return {'FINISHED'}
+        currentFocus = ctx.object
         startEdit()
         createStairProxy()
         endEdit()
+        focusObject(currentFocus)
         return {'FINISHED'}
 
 def updateMesh(scene):
