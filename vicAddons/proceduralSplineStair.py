@@ -70,7 +70,7 @@ def createStairProxy():
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-            pile_mat = Matrix.Translation(pos) @ hori_quat.to_matrix().to_4x4()
+            pile_mat = Matrix.Translation(hori_mat @ (pt + Vector((stepLength/2,0,0)))) @ hori_quat.to_matrix().to_4x4()
             pile_mats.append(pile_mat)
 
         pilePoints += pile_mats
@@ -177,8 +177,7 @@ class vic_procedural_stair_update(bpy.types.Operator):
 #         return {'FINISHED'}
 
 
-def updateMesh(scene):
-    createStairProxy()
+
 
 def startEdit():
     ctx = bpy.context
@@ -226,9 +225,8 @@ def endEdit():
         bpy.ops.mesh.remove_doubles()
         # bpy.ops.mesh.faces_shade_smooth()
         bpy.ops.mesh.normals_make_consistent(inside=False)
-        bpy.ops.object.editmode_toggle() 
+        bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
-
         createPiles()
 
 def createPiles():
@@ -249,7 +247,12 @@ def createPiles():
 def removePiles():
     removeObjects([o for o in bpy.data.objects if "pileObj" in o.name])
 
+
+
 def invokeLiveEdit(self, context):
+    def updateMesh(scene):
+        createStairProxy()
+
     if context.window_manager.vic_procedural_stair_update_live:
         startEdit()
         bpy.ops.screen.animation_play()
