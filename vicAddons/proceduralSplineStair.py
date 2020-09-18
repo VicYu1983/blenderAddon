@@ -32,12 +32,14 @@ def createStairProxy():
     curve["Step"] = bpy.context.window_manager.vic_procedural_stair_update_step
     curve["Step_Threshold"] = bpy.context.window_manager.vic_procedural_stair_update_step_threshold
     curve["Ground"] = bpy.context.window_manager.vic_procedural_stair_update_ground
+    curve["OnGround"] = bpy.context.window_manager.vic_procedural_stair_update_onGround
 
     if curve["Width"] <= 0: return
     width = curve["Width"]
     step = curve["Step"]
     step_threshold = curve["Step_Threshold"]
     ground = curve["Ground"]
+    onGround = curve["OnGround"]
     
     length, matrices = getCurvePosAndLength(curve, step)
     if length == 0: return
@@ -89,16 +91,20 @@ def createStairProxy():
             addRectVertex((last_pts[0],last_pts[1], step_pt1, step_pt0), ((0,0),(0,0),(0,0),(0,0)))
 
             side_pt0 = last_pts[0].copy()
-            side_pt0.z = ground
-
-            side_pt1 = step_pt0.copy()
-            side_pt1.z = ground
-
+            side_pt1 = curr_pts[0].copy()
             side_pt2 = last_pts[1].copy()
-            side_pt2.z = ground
-
-            side_pt3 = step_pt1.copy()
-            side_pt3.z = ground
+            side_pt3 = curr_pts[1].copy()
+            
+            if onGround:
+                side_pt0.z = ground
+                side_pt1.z = ground
+                side_pt2.z = ground
+                side_pt3.z = ground
+            else:
+                side_pt0.z += ground
+                side_pt1.z += ground
+                side_pt2.z += ground
+                side_pt3.z += ground
 
             # 樓梯左側面
             if current_height < 0:
@@ -126,6 +132,9 @@ def createStairProxy():
 
                 addRectVertex((last_pts[1],step_pt1, step_connect_pt), ((0,0),(0,0),(0,0),(0,0)))
                 addRectVertex((step_connect_pt, step_pt1, side_pt3, side_pt2), ((0,0),(0,0),(0,0),(0,0)))
+
+            # 底部mesh
+            addRectVertex((side_pt0, side_pt1, side_pt3, side_pt2), ((0,0),(0,0),(0,0),(0,0)))
                 
             last_height = current_height
             last_isStep = current_isStep
@@ -188,12 +197,14 @@ def startEdit():
     addProps(curve, "Width", 1)
     addProps(curve, "Step", 2)
     addProps(curve, "Step_Threshold", .2)
+    addProps(curve, "OnGround", 0)
     addProps(curve, "Ground", -1)
 
     bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
     bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
     bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
     bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
+    bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
 
 def endEdit():
     if vic_procedural_stair_update.meshName in bpy.data.objects.keys():
@@ -224,6 +235,9 @@ def invokeLiveEdit(self, context):
 bpy.types.WindowManager.vic_procedural_stair_update_live =   bpy.props.BoolProperty(
                                                             default = False,
                                                             update = invokeLiveEdit)
+
+bpy.types.WindowManager.vic_procedural_stair_update_onGround =   bpy.props.BoolProperty(
+                                                                default = False)
 
 bpy.types.WindowManager.vic_procedural_stair_update_width = bpy.props.FloatProperty(
                                                             name='Width',
@@ -258,9 +272,12 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.operator(vic_procedural_stair_update.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
-        col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
         col.prop(context.window_manager, 'vic_procedural_stair_update_ground')
+
+        
         
 
         
