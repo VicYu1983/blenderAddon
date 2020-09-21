@@ -160,8 +160,6 @@ class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
 
-    meshName = "vic_procedural_stair_update_mesh"
-
     def execute(self, context):
         ctx = bpy.context
         if not ctx.object or ctx.object.type != 'CURVE': 
@@ -189,8 +187,6 @@ def startEdit():
     ctx = bpy.context
     if not ctx.object or ctx.object.type != 'CURVE': return
 
-    removePiles()
-
     curve = ctx.object
     caches["curve"] = curve
 
@@ -200,7 +196,7 @@ def startEdit():
             focusObject(bpy.data.objects[mesh])
             bpy.ops.object.delete()
 
-    meshName = vic_procedural_stair_update.meshName
+    meshName = curve.name + "_step"
     (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh(meshName)
     caches["obj"] = obj
     caches["update"] = update
@@ -209,8 +205,9 @@ def startEdit():
     caches["pilePoints"] = []
     
     addProps(curve, "Mesh", obj.name, True)
+    addProps(curve, "Pile", "")
     addProps(curve, "Width", 1)
-    addProps(curve, "Step", 2)
+    addProps(curve, "Step", 50)
     addProps(curve, "Step_Threshold", .2)
     addProps(curve, "OnGround", 0)
     addProps(curve, "Ground", -1)
@@ -221,9 +218,13 @@ def startEdit():
     bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
     bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
 
+    removePiles()
+
 def endEdit():
-    if vic_procedural_stair_update.meshName in bpy.data.objects.keys():
-        obj = bpy.data.objects[vic_procedural_stair_update.meshName]
+    curve = caches["curve"]
+    if curve.name not in bpy.data.objects.keys(): return
+    if curve["Mesh"] != "" and curve["Mesh"] in bpy.data.objects.keys():
+        obj = bpy.data.objects[curve["Mesh"]]
         obj.select_set(True)
         activeObject(obj)
         bpy.ops.object.editmode_toggle()
@@ -236,22 +237,29 @@ def endEdit():
         createPiles()
 
 def createPiles():
-    print("createPiles")
+    
+    curve = caches["curve"]
+    pile = curve["Pile"]
+    if pile == "" or pile not in bpy.data.objects: return
 
     pilePoints = caches["pilePoints"]
     parent = caches["obj"]
 
-    copyFrom = bpy.data.objects["Cylinder"]
+    copyFrom = bpy.data.objects[pile]
 
     for pp in pilePoints:
         pileobj = copyObject(copyFrom, True)
         pileobj.matrix_world = pp
-        pileobj.name = "pileObj"
+        pileobj.name = curve.name + "_pile"
         pileobj.parent = parent
         addObject(pileobj)
 
 def removePiles():
-    removeObjects([o for o in bpy.data.objects if "pileObj" in o.name])
+    
+    curve = caches["curve"]
+    pile = curve["Pile"]
+    if pile == "" or pile not in bpy.data.objects: return
+    removeObjects([o for o in bpy.data.objects if curve.name + "_pile" in o.name])
 
 
 
