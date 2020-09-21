@@ -49,6 +49,7 @@ def createStairProxy():
     # reset mesh data
     clear()
     pilePoints = []
+    if curve.name + "_wall" in bpy.data.objects.keys(): removeObjects([bpy.data.objects[curve.name + "_wall"]])
 
     last_pts = None
     last_height = 0
@@ -172,17 +173,6 @@ class vic_procedural_stair_update(bpy.types.Operator):
         focusObject(currentFocus)
         return {'FINISHED'}
 
-
-# class vic_procedural_stair_pile(bpy.types.Operator):
-#     bl_idname = "vic.vic_procedural_stair_pile"
-#     bl_label = "Create & Update Pile"
-
-#     def execute(self, context):
-#         return {'FINISHED'}
-
-
-
-
 def startEdit():
     ctx = bpy.context
     if not ctx.object or ctx.object.type != 'CURVE': return
@@ -261,9 +251,6 @@ def createPiles():
         addObject(pileobj)
 
 
-
-
-    # (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = 
     creator = prepareAndCreateMesh(curve.name + "_wall")
     obj = creator["obj"]
     update = creator["update"]
@@ -274,18 +261,34 @@ def createPiles():
 
     copyFrom = bpy.data.objects["Cube"]
 
-
-    
-
     def createWall(curr_pp, prev_pp):
         
         def transferVertex(vid, v):
-            direct = (curr_pp.to_translation() - prev_pp.to_translation()).normalized()
+            curr_pp_pos = curr_pp.to_translation()
+            prev_pp_pos = prev_pp.to_translation()
+            direct = (curr_pp_pos - prev_pp_pos).normalized()
 
-            pos_mat = Matrix.Translation((curr_pp.to_translation() + prev_pp.to_translation()) / 2)
+            proj_dir = direct.copy()
+            proj_dir.z = 0
+            proj_dir.normalize()
+
+            # 確認角度方向，先把方向正規化，再檢查y是正的還是負的
+            side_dir = direct.cross(proj_dir)
+            side_dir.normalize()
+            rot_mat = Matrix.Rotation(atan2(direct.y, direct.x), 4, 'Z')
+            rot_mat.transpose()
+            side_dir = rot_mat @ side_dir
+
+            cos_a = direct.dot(proj_dir)
+            pitch = acos(cos_a) * side_dir.y
+
+            skew = Vector((v.co.x, v.co.y, v.co.z))
+            skew.z += tan(pitch) * skew.x
+
+            pos_mat = Matrix.Translation((curr_pp_pos + prev_pp_pos) / 2)
             rot_mat = Matrix.Rotation(atan2(direct.y, direct.x), 4, 'Z')
             new_mat = pos_mat @ rot_mat
-            return new_mat @ Vector((v.co.x, v.co.y, v.co.z))
+            return new_mat @ skew
 
         addVertexByMesh(copyFrom, 0, transferVertex)
 
