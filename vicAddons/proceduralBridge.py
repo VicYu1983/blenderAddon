@@ -11,7 +11,7 @@ from bpy.props import (
         StringProperty,
         PointerProperty
         )
-from ..vic_tools import *
+from .vic_tools import *
 
 styleSetList = [
     ('0','Normal', 'Normal'),
@@ -306,3 +306,15 @@ class vic_procedural_bridge(bpy.types.Operator):
         base.name = 'ProcedrualBridge'
         
         return {'FINISHED'}
+
+class vic_procedural_bridge_panel(bpy.types.Panel):
+    bl_category = "Vic Addons"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_label = "Procedrual Bridge"
+
+    def draw(self, context):
+        layout = self.layout
+        
+        col = layout.column(align=True)
+        col.operator(vic_procedural_bridge.bl_idname)  

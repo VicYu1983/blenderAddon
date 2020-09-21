@@ -7,11 +7,8 @@ from .operators import (
     HandDrag,
     ParticleToRigidbody,
     MeshFlatten,
-    ProceduralStair,
-    ProceduralBridge,
     LineAlign
 )
-
 
 class ActionProperties(bpy.types.PropertyGroup):
     string_select_name:bpy.props.StringProperty( name="", description="Name of select objects", default="")    
@@ -35,23 +32,6 @@ class VIC_PT_ACTION_PANEL(bpy.types.Panel):
         row.prop(context.scene.action_properties, 'string_select_name' )
         row.operator(SelectByName.vic_select_by_name.bl_idname)
 
-        col.label(text='Generator')
-        col.operator(ProceduralStair.vic_procedural_stair.bl_idname)
-        col.operator(ProceduralBridge.vic_procedural_bridge.bl_idname)
-
-        col.label(text='Stair Generator')
-        col.operator(ProceduralSplineStair.vic_procedural_stair_proxy.bl_idname)
-        col.prop(context.window_manager, 'vic_procedural_stair_proxy_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
-        col.prop(context.window_manager, 'vic_procedural_stair_proxy_width')
-        col.prop(context.window_manager, 'vic_procedural_stair_proxy_step')
-
-        col.label(text='Lantern Generator')
-        col.operator(ProceduralLantern.vic_procedural_lantern_proxy.bl_idname)
-        col.operator(ProceduralLantern.vic_procedural_lantern_connect.bl_idname)
-        col.operator(ProceduralLantern.vic_procedural_lantern.bl_idname)
-
-        col.prop(context.window_manager, 'vic_procedural_lantern_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
-
         col.label(text='Drag Effect')
         col.operator(HandDrag.vic_hand_drag.bl_idname)
         col.operator(HandDrag.vic_healing_all_effect_objects.bl_idname)
@@ -72,8 +52,6 @@ classes = (
     HandDrag.vic_healing_all_effect_objects,
     ParticleToRigidbody.ParticlesToRigidbodys,
     MeshFlatten.vic_make_meshs_plane,
-    ProceduralStair.vic_procedural_stair,
-    ProceduralBridge.vic_procedural_bridge,
     LineAlign.vic_line_align
 )
 def register():

@@ -11,7 +11,7 @@ from bpy.props import (
         StringProperty,
         PointerProperty
         )
-from ..vic_tools import (
+from .vic_tools import (
     addObject,
     activeObject,
     copyObject,
@@ -404,4 +404,14 @@ class vic_procedural_stair(bpy.types.Operator):
         box.prop_search(self, "stairMaterial", bpy.data, "materials")
         box.prop_search(self, "stairSideMaterial", bpy.data, "materials")
 
+class vic_procedural_stair_panel(bpy.types.Panel):
+    bl_category = "Vic Addons"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_label = "Procedrual Stair"
+
+    def draw(self, context):
+        layout = self.layout
         
+        col = layout.column(align=True)
+        col.operator(vic_procedural_stair.bl_idname)     
