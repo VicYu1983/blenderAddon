@@ -72,7 +72,7 @@ def createStairProxy():
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-            if last_pts and i % 5 == 0:
+            if last_pts and i % 3 == 0:
                 pile_pos = hori_mat @ pile_pts[j]
                 last_pt = last_pts[j]
                 offset_pt = (pile_pos + last_pt) / 2
@@ -260,13 +260,15 @@ def createPiles():
     rightside_pts = pilePoints[1::2]
 
     copyFrom = bpy.data.objects["Cube"]
+    copyFrom_length = copyFrom.dimensions.x
 
     def createWall(curr_pp, prev_pp):
         
         def transferVertex(vid, v):
             curr_pp_pos = curr_pp.to_translation()
             prev_pp_pos = prev_pp.to_translation()
-            direct = (curr_pp_pos - prev_pp_pos).normalized()
+            diff = curr_pp_pos - prev_pp_pos
+            direct = diff.normalized()
 
             proj_dir = direct.copy()
             proj_dir.z = 0
@@ -282,7 +284,12 @@ def createPiles():
             cos_a = direct.dot(proj_dir)
             pitch = acos(cos_a) * side_dir.y
 
+            hori_diff = diff.copy()
+            hori_diff.z = 0
+            scale_width = hori_diff.length / copyFrom_length
+
             skew = Vector((v.co.x, v.co.y, v.co.z))
+            skew.x *= scale_width
             skew.z += tan(pitch) * skew.x
 
             pos_mat = Matrix.Translation((curr_pp_pos + prev_pp_pos) / 2)
