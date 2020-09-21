@@ -197,7 +197,13 @@ def startEdit():
             bpy.ops.object.delete()
 
     meshName = curve.name + "_step"
-    (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh(meshName)
+
+    creator = prepareAndCreateMesh(meshName)
+    obj = creator["obj"]
+    update = creator["update"]
+    clear = creator["clear"]
+    addRectVertex = creator["addRectVertex"]
+
     caches["obj"] = obj
     caches["update"] = update
     caches["addRectVertex"] = addRectVertex
@@ -256,7 +262,9 @@ def createPiles():
 
 
 
-    
+
+    # (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = 
+    creator = prepareAndCreateMesh(curve.name + "_wall")
 
     leftside_pts = pilePoints[::2]
     rightside_pts = pilePoints[1::2]

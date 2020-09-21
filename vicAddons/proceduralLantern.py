@@ -136,7 +136,10 @@ class vic_procedural_lantern(bpy.types.Operator):
         lanternSegment = lanternManager["LanternSegment"]
         lanternRandomOffset = lanternManager["LanternRandomOffset"]
 
-        (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = prepareAndCreateMesh("Ropes")
+        creator = prepareAndCreateMesh("Ropes")
+        obj = creator["creator"]
+        update = creator["update"]
+        addRectVertex = creator["addRectVertex"]
 
         lanterns = []
         connects = [o for o in bpy.data.objects if "ConnectData" in o.name]

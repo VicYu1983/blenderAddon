@@ -210,7 +210,14 @@ def prepareAndCreateMesh(name):
                 obj.data.uv_layers.active.data[loop_idx].uv = uv
             face.material_index = matIds[i]
 
-    return (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh)
+    return {
+        "obj": obj, 
+        "update": update, 
+        "clear": clear, 
+        "addRectVertex": addRectVertex,
+        "addVertexAndFaces": addVertexAndFaces,
+        "addVertexByMesh": addVertexByMesh
+    }
 
 def mergeOverlayVertex(obj):
     obj.select_set(True)
