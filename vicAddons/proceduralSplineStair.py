@@ -1,7 +1,7 @@
 import bpy
 from .vic_tools import *
 from mathutils import *
-
+from math import *
 
 caches = {
     "curve":None,
@@ -254,14 +254,41 @@ def createPiles():
         pileobj.parent = parent
         addObject(pileobj)
 
-def removePiles():
+
+
     
+
+    leftside_pts = pilePoints[::2]
+    rightside_pts = pilePoints[1::2]
+
+    copyFrom = bpy.data.objects["Cube"]
+
+    def createWall(curr_pp, prev_pp):
+        pileobj = copyObject(copyFrom, True)
+        pileobj.location = (curr_pp.to_translation() + prev_pp.to_translation()) / 2
+
+        direct = (curr_pp.to_translation() - prev_pp.to_translation()).normalized()
+        direct.z = 0
+        pileobj.rotation_euler.z = atan2(direct.y, direct.x)
+        
+        pileobj.name = curve.name + "_wall"
+        pileobj.parent = parent
+        addObject(pileobj)
+
+    for i, curr_pp in enumerate(leftside_pts):
+        if i == 0: continue
+        prev_pp = leftside_pts[i-1]
+        createWall(curr_pp, prev_pp)
+
+    for i, curr_pp in enumerate(rightside_pts):
+        if i == 0: continue
+        prev_pp = rightside_pts[i-1]
+        createWall(curr_pp, prev_pp)
+
+def removePiles():
     curve = caches["curve"]
-    pile = curve["Pile"]
-    if pile == "" or pile not in bpy.data.objects: return
     removeObjects([o for o in bpy.data.objects if curve.name + "_pile" in o.name])
-
-
+    removeObjects([o for o in bpy.data.objects if curve.name + "_wall" in o.name])
 
 def invokeLiveEdit(self, context):
     def updateMesh(scene):
