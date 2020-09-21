@@ -265,23 +265,29 @@ def createPiles():
 
     # (obj, update, clear, addRectVertex, addVertexAndFaces, addVertexByMesh) = 
     creator = prepareAndCreateMesh(curve.name + "_wall")
+    obj = creator["obj"]
+    update = creator["update"]
+    addVertexByMesh = creator["addVertexByMesh"]
 
     leftside_pts = pilePoints[::2]
     rightside_pts = pilePoints[1::2]
 
     copyFrom = bpy.data.objects["Cube"]
 
-    def createWall(curr_pp, prev_pp):
-        pileobj = copyObject(copyFrom, True)
-        pileobj.location = (curr_pp.to_translation() + prev_pp.to_translation()) / 2
 
-        direct = (curr_pp.to_translation() - prev_pp.to_translation()).normalized()
-        direct.z = 0
-        pileobj.rotation_euler.z = atan2(direct.y, direct.x)
+    
+
+    def createWall(curr_pp, prev_pp):
         
-        pileobj.name = curve.name + "_wall"
-        pileobj.parent = parent
-        addObject(pileobj)
+        def transferVertex(vid, v):
+            direct = (curr_pp.to_translation() - prev_pp.to_translation()).normalized()
+
+            pos_mat = Matrix.Translation((curr_pp.to_translation() + prev_pp.to_translation()) / 2)
+            rot_mat = Matrix.Rotation(atan2(direct.y, direct.x), 4, 'Z')
+            new_mat = pos_mat @ rot_mat
+            return new_mat @ Vector((v.co.x, v.co.y, v.co.z))
+
+        addVertexByMesh(copyFrom, 0, transferVertex)
 
     for i, curr_pp in enumerate(leftside_pts):
         if i == 0: continue
@@ -292,6 +298,8 @@ def createPiles():
         if i == 0: continue
         prev_pp = rightside_pts[i-1]
         createWall(curr_pp, prev_pp)
+
+    update()
 
 def removePiles():
     curve = caches["curve"]
