@@ -29,6 +29,9 @@ def createStairProxy(isLive = False):
     addRectVertex = caches["addRectVertex"]
 
     curve["Width"] = bpy.context.window_manager.vic_procedural_stair_update_width
+    curve["Wall_Inner_Distance"] = bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance
+    curve["Pile_Per_Step"] = bpy.context.window_manager.vic_procedural_stair_update_pile_per_step
+    curve["Pile_Z"] = bpy.context.window_manager.vic_procedural_stair_update_pile_z
     curve["Step"] = bpy.context.window_manager.vic_procedural_stair_update_step
     curve["Step_Threshold"] = bpy.context.window_manager.vic_procedural_stair_update_step_threshold
     curve["Ground"] = bpy.context.window_manager.vic_procedural_stair_update_ground
@@ -36,6 +39,8 @@ def createStairProxy(isLive = False):
 
     width = curve["Width"]
     wall_inner_distance = curve["Wall_Inner_Distance"]
+    pile_per_step = curve["Pile_Per_Step"]
+    pile_z = curve["Pile_Z"]
     step = curve["Step"]
     step_threshold = curve["Step_Threshold"]
     ground = curve["Ground"]
@@ -73,11 +78,11 @@ def createStairProxy(isLive = False):
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-            if last_pts and i % 3 == 0:
+            if last_pts and i % pile_per_step == 0:
                 pile_pos = hori_mat @ pile_pts[j]
                 last_pt = last_pts[j]
                 offset_pt = (pile_pos + last_pt) / 2
-                offset_pt.z = last_pt.z
+                offset_pt.z = last_pt.z + pile_z
                 pile_mat = Matrix.Translation(offset_pt) @ hori_quat.to_matrix().to_4x4()
                 pile_mats.append(pile_mat)
 
@@ -172,7 +177,7 @@ def createStairProxy(isLive = False):
 def getPssProxyFromPool(i):
     pssProxyPool = caches["pssProxyPool"]
     if i < len(pssProxyPool) - 1: return pssProxyPool[i]
-    bpy.ops.object.empty_add(type='SPHERE')
+    bpy.ops.object.empty_add(type='ARROWS')
     proxy = bpy.context.object
     proxy.name = "pss_proxy"
     pssProxyPool.append(proxy)
@@ -219,6 +224,8 @@ def startEdit():
     addProps(curve, "Wall", "")
     addProps(curve, "Width", 1)
     addProps(curve, "Wall_Inner_Distance", .1)
+    addProps(curve, "Pile_Per_Step", 5)
+    addProps(curve, "Pile_Z", 0)
     addProps(curve, "Step", 50)
     addProps(curve, "Step_Threshold", .2)
     addProps(curve, "OnGround", 0)
@@ -382,6 +389,20 @@ bpy.types.WindowManager.vic_procedural_stair_update_width = bpy.props.FloatPrope
                                                             default=.5,
                                                             min=0.01)
 
+bpy.types.WindowManager.vic_procedural_stair_update_wall_inner_distance = bpy.props.FloatProperty(
+                                                            name='Wall Inner Distance',
+                                                            default=.1)
+
+bpy.types.WindowManager.vic_procedural_stair_update_pile_per_step = bpy.props.IntProperty(
+                                                            name='Pile Per Step',
+                                                            default=5,
+                                                            min=1,
+                                                            step=1)
+
+bpy.types.WindowManager.vic_procedural_stair_update_pile_z = bpy.props.FloatProperty(
+                                                            name='Pile Z',
+                                                            default=0)
+
 bpy.types.WindowManager.vic_procedural_stair_update_step_threshold = bpy.props.FloatProperty(
                                                             name='Step Threshold',
                                                             default=.2,
@@ -410,6 +431,9 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.operator(vic_procedural_stair_update.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_wall_inner_distance')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_pile_per_step')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_pile_z')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
         col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
