@@ -160,8 +160,7 @@ def createStairProxy(isLive = False):
 
     if isLive:
 
-        for o in caches["pssProxyPool"]:
-            o.hide_viewport = True
+        for o in caches["pssProxyPool"]: o.hide_viewport = True
 
         curr_focus = bpy.context.object
         for i, pp in enumerate(pilePoints):
@@ -256,6 +255,7 @@ def endEdit():
         bpy.ops.object.select_all(action='DESELECT')
 
     # 確認對位用的代理物件被清除乾净
+    for o in caches["pssProxyPool"]: o.hide_viewport = False
     removeObjects([o for o in bpy.data.objects if "pss_proxy" in o.name])
     caches["pssProxyPool"] = []
 
