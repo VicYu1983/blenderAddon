@@ -45,6 +45,7 @@ def createStairProxy(isLive = False):
     step_threshold = curve["Step_Threshold"]
     ground = curve["Ground"]
     onGround = curve["OnGround"]
+    uv_scale = .01
 
     if width <= 0 or step <= 0: return
     
@@ -130,9 +131,7 @@ def createStairProxy(isLive = False):
                 side_pt2.z += ground
                 side_pt3.z += ground
 
-            
-            uv_curr_x = (curr_pts[0] - last_pts[0]).length
-            uv_curr_y = current_height
+            uv_curr_x = (side_pt1 - side_pt0).length
 
             uv_last_pts0 = (uv_last_x,last_pts[0].z)
             uv_last_pts1 = (uv_last_x,last_pts[1].z)
@@ -147,8 +146,8 @@ def createStairProxy(isLive = False):
                 
             # 樓梯左側面
             if current_height < 0:
-                addRectVertex((last_pts[0],step_pt0, curr_pts[0]), (uv_last_pts0,uv_step_pt0,uv_curr_pts0), .1)
-                addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), (uv_last_pts0,uv_curr_pts0,uv_side_pt1,uv_side_pt0), .1)
+                addRectVertex((last_pts[0],step_pt0, curr_pts[0]), (uv_last_pts0,uv_step_pt0,uv_curr_pts0), uv_scale)
+                addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), (uv_last_pts0,uv_curr_pts0,uv_side_pt1,uv_side_pt0), uv_scale)
             else:
                 if last_isStep:
                     step_connect_pt = last_pts[0] + Vector((0,0,-last_height))
@@ -156,25 +155,25 @@ def createStairProxy(isLive = False):
                     step_connect_pt = last_pts[0]
 
                 uv_step_connect_pt = (uv_last_x, step_connect_pt.z)
-                addRectVertex((last_pts[0],step_pt0, step_connect_pt), (uv_last_pts0,uv_step_pt0,uv_step_connect_pt), .1)
-                addRectVertex((step_connect_pt, step_pt0, side_pt1, side_pt0), (uv_step_connect_pt,uv_step_pt0,uv_side_pt1,uv_side_pt0), .1)
+                addRectVertex((last_pts[0],step_pt0, step_connect_pt), (uv_last_pts0,uv_step_pt0,uv_step_connect_pt), uv_scale)
+                addRectVertex((step_connect_pt, step_pt0, side_pt1, side_pt0), (uv_step_connect_pt,uv_step_pt0,uv_side_pt1,uv_side_pt0), uv_scale)
             
 
             # 樓梯右側面
             if current_height < 0:
-                addRectVertex((last_pts[1],step_pt1, curr_pts[1]), (uv_last_pts1,uv_step_pt1,uv_curr_pts1), .1)
-                addRectVertex((last_pts[1],curr_pts[1], side_pt3, side_pt2), (uv_last_pts1,uv_curr_pts1,uv_side_pt3,uv_side_pt2), .1)
+                addRectVertex((last_pts[1],step_pt1, curr_pts[1]), (uv_last_pts1,uv_step_pt1,uv_curr_pts1), uv_scale)
+                addRectVertex((last_pts[1],curr_pts[1], side_pt3, side_pt2), (uv_last_pts1,uv_curr_pts1,uv_side_pt3,uv_side_pt2), uv_scale)
             else:
                 if last_isStep:
                     step_connect_pt = last_pts[1] + Vector((0,0,-last_height))
                 else:
                     step_connect_pt = last_pts[1]
 
-                addRectVertex((last_pts[1],step_pt1, step_connect_pt), (uv_last_pts1,uv_step_pt1,uv_step_connect_pt), .1)
-                addRectVertex((step_connect_pt, step_pt1, side_pt3, side_pt2), (uv_step_connect_pt, uv_step_pt1, uv_side_pt3, uv_side_pt2), .1)
+                addRectVertex((last_pts[1],step_pt1, step_connect_pt), (uv_last_pts1,uv_step_pt1,uv_step_connect_pt), uv_scale)
+                addRectVertex((step_connect_pt, step_pt1, side_pt3, side_pt2), (uv_step_connect_pt, uv_step_pt1, uv_side_pt3, uv_side_pt2), uv_scale)
 
             # 底部mesh
-            addRectVertex((side_pt0, side_pt1, side_pt3, side_pt2), ((0,0),(0,0),(0,0),(0,0)))
+            addRectVertex((side_pt0, side_pt1, side_pt3, side_pt2), (uv_side_pt0, uv_side_pt1, uv_side_pt3, uv_side_pt2), uv_scale)
                 
             last_height = current_height
             last_isStep = current_isStep
