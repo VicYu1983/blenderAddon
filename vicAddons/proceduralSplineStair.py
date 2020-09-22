@@ -344,8 +344,8 @@ def createWallAndPiles():
             rot_mat.transpose()
             side_dir = rot_mat @ side_dir
 
-            cos_a = direct.dot(proj_dir)
-            pitch = acos(cos_a) * side_dir.y
+            # angle 等於 acos(direct.dot(proj_dir))，但是這樣算會有不合法參數的問題，改成用内建的算法
+            pitch = direct.angle(proj_dir) * side_dir.y
 
             hori_diff = diff.copy()
             hori_diff.z = 0
