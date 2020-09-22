@@ -60,6 +60,9 @@ def createStairProxy(isLive = False):
     last_pts = None
     last_height = 0
     last_isStep = False
+    uv_last_x = 0
+    uv_last_y = 0
+    
 
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
     pile_pts = (Vector((0,width/2 - wall_inner_distance,0)), Vector((0,-width/2 + wall_inner_distance,0)))
@@ -129,18 +132,37 @@ def createStairProxy(isLive = False):
                 side_pt2.z += ground
                 side_pt3.z += ground
 
+            
+            uv_curr_x = (curr_pts[0] - last_pts[0]).length
+            uv_curr_y = current_height
+
+            if onGround:
+                uv_last_pts0 = (uv_last_x,last_pts[0].z)
+                uv_curr_pts0 = (uv_last_x+uv_curr_x,curr_pts[0].z)
+                uv_side_pt1 = (uv_last_x+uv_curr_x,ground)
+                uv_side_pt0 = (uv_last_x,ground)
+                uv_step_pt0 = (uv_last_x+uv_curr_x, step_pt0.z)
+            else:
+                uv_last_pts0 = (uv_last_x,last_pts[0].z)
+                uv_curr_pts0 = (uv_last_x+uv_curr_x,curr_pts[0].z)
+                uv_side_pt1 = (uv_last_x+uv_curr_x,ground)
+                uv_side_pt0 = (uv_last_x,ground)
+                uv_step_pt0 = (uv_last_x+uv_curr_x, step_pt0.z)
+                
             # 樓梯左側面
             if current_height < 0:
-                addRectVertex((last_pts[0],step_pt0, curr_pts[0]), ((0,0),(0,0),(0,0),(0,0)))
-                addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), ((0,0),(0,0),(0,0),(0,0)))
+                
+                addRectVertex((last_pts[0],step_pt0, curr_pts[0]), (uv_last_pts0,uv_step_pt0,uv_curr_pts0), .1)
+                addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), (uv_last_pts0,uv_curr_pts0,uv_side_pt1,uv_side_pt0), .1)
             else:
                 if last_isStep:
                     step_connect_pt = last_pts[0] + Vector((0,0,-last_height))
                 else:
                     step_connect_pt = last_pts[0]
 
-                addRectVertex((last_pts[0],step_pt0, step_connect_pt), ((0,0),(0,0),(0,0),(0,0)))
-                addRectVertex((step_connect_pt, step_pt0, side_pt1, side_pt0), ((0,0),(0,0),(0,0),(0,0)))
+                uv_step_connect_pt = (uv_last_x, step_connect_pt.z)
+                addRectVertex((last_pts[0],step_pt0, step_connect_pt), (uv_last_pts0,uv_step_pt0,uv_step_connect_pt), .1)
+                addRectVertex((step_connect_pt, step_pt0, side_pt1, side_pt0), (uv_step_connect_pt,uv_step_pt0,uv_side_pt1,uv_side_pt0), .1)
             
 
             # 樓梯右側面
@@ -161,6 +183,10 @@ def createStairProxy(isLive = False):
                 
             last_height = current_height
             last_isStep = current_isStep
+
+            uv_last_x += uv_curr_x
+            uv_last_y += uv_curr_y
+            
         last_pts = curr_pts
 
     caches["pilePoints"] = pilePoints
@@ -266,6 +292,8 @@ def endEdit():
         bpy.ops.mesh.normals_make_consistent(inside=False)
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
+
+        obj.data.materials.append(bpy.data.materials[1])
 
     # 確認對位用的代理物件被清除乾净
     for o in caches["pssProxyPool"]: o.hide_viewport = False
