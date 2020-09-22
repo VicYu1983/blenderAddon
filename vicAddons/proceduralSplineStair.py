@@ -9,7 +9,8 @@ caches = {
     "update":None,
     "clear":None,
     "addRectVertex":None,
-    "pilePoints":None
+    "pilePoints":None,
+    "pssProxyPool":[]
 }
 
 def createStairManager():
@@ -20,7 +21,7 @@ def createStairManager():
     mgrObj = bpy.context.object
     mgrObj.name = "StairManager"
 
-def createStairProxy():
+def createStairProxy(isLive = False):
 
     curve = caches["curve"]
     update = caches["update"]
@@ -34,6 +35,7 @@ def createStairProxy():
     curve["OnGround"] = bpy.context.window_manager.vic_procedural_stair_update_onGround
 
     width = curve["Width"]
+    wall_inner_distance = curve["Wall_Inner_Distance"]
     step = curve["Step"]
     step_threshold = curve["Step_Threshold"]
     ground = curve["Ground"]
@@ -55,7 +57,7 @@ def createStairProxy():
     last_isStep = False
 
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
-    pile_pts = (Vector((0,width/2 - .5,0)), Vector((0,-width/2 + .5,0)))
+    pile_pts = (Vector((0,width/2 - wall_inner_distance,0)), Vector((0,-width/2 + wall_inner_distance,0)))
     for i, mat in enumerate(matrices):
         curr_pts = []
         pile_mats = []
@@ -156,6 +158,27 @@ def createStairProxy():
     caches["pilePoints"] = pilePoints
     update()
 
+    if isLive:
+
+        for o in caches["pssProxyPool"]:
+            o.hide_viewport = True
+
+        curr_focus = bpy.context.object
+        for i, pp in enumerate(pilePoints):
+            proxy = getPssProxyFromPool(i)
+            proxy.matrix_world = pp
+            proxy.hide_viewport = False
+        if curr_focus: focusObject(curr_focus)
+
+def getPssProxyFromPool(i):
+    pssProxyPool = caches["pssProxyPool"]
+    if i < len(pssProxyPool) - 1: return pssProxyPool[i]
+    bpy.ops.object.empty_add(type='SPHERE')
+    proxy = bpy.context.object
+    proxy.name = "pss_proxy"
+    pssProxyPool.append(proxy)
+    return proxy
+
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
@@ -196,6 +219,7 @@ def startEdit():
     addProps(curve, "Pile", "")
     addProps(curve, "Wall", "")
     addProps(curve, "Width", 1)
+    addProps(curve, "Wall_Inner_Distance", .1)
     addProps(curve, "Step", 50)
     addProps(curve, "Step_Threshold", .2)
     addProps(curve, "OnGround", 0)
@@ -231,7 +255,9 @@ def endEdit():
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
 
-    
+    # 確認對位用的代理物件被清除乾净
+    removeObjects([o for o in bpy.data.objects if "pss_proxy" in o.name])
+    caches["pssProxyPool"] = []
 
 def createWallAndPiles():
     
@@ -321,7 +347,7 @@ def removePiles():
     removeObjects([o for o in bpy.data.objects if curve.name + "_step" in o.name])
 
 def updateMesh(scene):
-    createStairProxy()
+    createStairProxy(True)
 
 def invokeLiveEdit(self, context):
     
@@ -332,11 +358,16 @@ def invokeLiveEdit(self, context):
             bpy.app.handlers.frame_change_post.remove(updateMesh)
         bpy.app.handlers.frame_change_post.append(updateMesh)
     else:
+
+        curr_focus = bpy.context.object
+
         bpy.ops.screen.animation_cancel()
         if updateMesh in bpy.app.handlers.frame_change_post:
             bpy.app.handlers.frame_change_post.remove(updateMesh)
         updateMesh(None)
         endEdit()
+
+        if curr_focus: focusObject(curr_focus)
         
 
 bpy.types.WindowManager.vic_procedural_stair_update_live =   bpy.props.BoolProperty(
