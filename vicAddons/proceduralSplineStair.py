@@ -49,7 +49,6 @@ def createStairProxy():
     # reset mesh data
     clear()
     pilePoints = []
-    if curve.name + "_wall" in bpy.data.objects.keys(): removeObjects([bpy.data.objects[curve.name + "_wall"]])
 
     last_pts = None
     last_height = 0
@@ -180,15 +179,9 @@ def startEdit():
     curve = ctx.object
     caches["curve"] = curve
 
-    if "Mesh" in curve: 
-        mesh = curve["Mesh"]
-        if mesh in bpy.data.objects: 
-            focusObject(bpy.data.objects[mesh])
-            bpy.ops.object.delete()
+    removePiles()
 
-    meshName = curve.name + "_step"
-
-    creator = prepareAndCreateMesh(meshName)
+    creator = prepareAndCreateMesh(curve.name + "_step")
     obj = creator["obj"]
     update = creator["update"]
     clear = creator["clear"]
@@ -200,8 +193,8 @@ def startEdit():
     caches["clear"] = clear
     caches["pilePoints"] = []
     
-    addProps(curve, "Mesh", obj.name, True)
     addProps(curve, "Pile", "")
+    addProps(curve, "Wall", "")
     addProps(curve, "Width", 1)
     addProps(curve, "Step", 50)
     addProps(curve, "Step_Threshold", .2)
@@ -214,25 +207,33 @@ def startEdit():
     bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
     bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
 
-    removePiles()
-
 def endEdit():
     curve = caches["curve"]
     if curve.name not in bpy.data.objects.keys(): return
-    if curve["Mesh"] != "" and curve["Mesh"] in bpy.data.objects.keys():
-        obj = bpy.data.objects[curve["Mesh"]]
+
+    createWallAndPiles()
+    
+    smooth_list = []
+    step_mesh = curve.name + "_step"
+    if step_mesh in bpy.data.objects.keys(): smooth_list.append( step_mesh )
+
+    wall_mesh = curve.name + "_wall"
+    if wall_mesh in bpy.data.objects.keys(): smooth_list.append( wall_mesh )
+
+    for smooth in smooth_list:
+        obj = bpy.data.objects[smooth]
         obj.select_set(True)
         activeObject(obj)
         bpy.ops.object.editmode_toggle()
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.mesh.remove_doubles()
-        # bpy.ops.mesh.faces_shade_smooth()
         bpy.ops.mesh.normals_make_consistent(inside=False)
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
-        createPiles()
 
-def createPiles():
+    
+
+def createWallAndPiles():
     
     curve = caches["curve"]
     pile = curve["Pile"]
@@ -250,6 +251,8 @@ def createPiles():
         pileobj.parent = parent
         addObject(pileobj)
 
+    wall = curve["Wall"]
+    if wall == "" or wall not in bpy.data.objects: return
 
     creator = prepareAndCreateMesh(curve.name + "_wall")
     obj = creator["obj"]
@@ -259,7 +262,7 @@ def createPiles():
     leftside_pts = pilePoints[::2]
     rightside_pts = pilePoints[1::2]
 
-    copyFrom = bpy.data.objects["Cube"]
+    copyFrom = bpy.data.objects[wall]
     copyFrom_length = copyFrom.dimensions.x
 
     def createWall(curr_pp, prev_pp):
@@ -315,6 +318,7 @@ def removePiles():
     curve = caches["curve"]
     removeObjects([o for o in bpy.data.objects if curve.name + "_pile" in o.name])
     removeObjects([o for o in bpy.data.objects if curve.name + "_wall" in o.name])
+    removeObjects([o for o in bpy.data.objects if curve.name + "_step" in o.name])
 
 def invokeLiveEdit(self, context):
     def updateMesh(scene):
@@ -328,7 +332,8 @@ def invokeLiveEdit(self, context):
         bpy.app.handlers.frame_change_post.append(updateMesh)
     else:
         bpy.ops.screen.animation_cancel()
-        bpy.app.handlers.frame_change_post.remove(updateMesh)
+        if updateMesh in bpy.app.handlers.frame_change_post:
+            bpy.app.handlers.frame_change_post.remove(updateMesh)
         updateMesh(None)
         endEdit()
         
@@ -378,9 +383,6 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
         col.prop(context.window_manager, 'vic_procedural_stair_update_ground')
 
-        # col = layout.column(align=True)
-        # col.operator(vic_procedural_stair_pile.bl_idname)
-        
 
         
         

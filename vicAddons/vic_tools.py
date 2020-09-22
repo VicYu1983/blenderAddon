@@ -230,7 +230,9 @@ def mergeOverlayVertex(obj):
 # example:
 # curve = bpy.data.objects["BezierCurve"]
 # total_length, matrices = getCurvePosAndLength(curve, 10)
-def getCurvePosAndLength(curve, count):   
+def getCurvePosAndLength(curve, count):  
+
+    if bpy.context.area == None: return (0, [])
     if bpy.context.area.type != 'VIEW_3D': return (0, [])
     if bpy.context.mode != 'OBJECT': return (0, [])
 
