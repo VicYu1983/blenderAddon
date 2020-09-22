@@ -78,7 +78,10 @@ def createStairProxy(isLive = False):
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
-            if last_pts and i % pile_per_step == 0:
+            is_per = (i % pile_per_step == 0)
+            is_first = (i == 1)
+            is_last = (i == len(matrices)-1)
+            if last_pts and (is_per or is_first or is_last):
                 pile_pos = hori_mat @ pile_pts[j]
                 last_pt = last_pts[j]
                 offset_pt = (pile_pos + last_pt) / 2
@@ -232,6 +235,9 @@ def startEdit():
     addProps(curve, "Ground", -1)
 
     bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
+    bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance = curve["Wall_Inner_Distance"]
+    bpy.context.window_manager.vic_procedural_stair_update_pile_per_step = curve["Pile_Per_Step"]
+    bpy.context.window_manager.vic_procedural_stair_update_pile_z = curve["Pile_Z"]
     bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
     bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
     bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
