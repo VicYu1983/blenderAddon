@@ -136,22 +136,14 @@ def createStairProxy(isLive = False):
             uv_curr_x = (curr_pts[0] - last_pts[0]).length
             uv_curr_y = current_height
 
-            if onGround:
-                uv_last_pts0 = (uv_last_x,last_pts[0].z)
-                uv_curr_pts0 = (uv_last_x+uv_curr_x,curr_pts[0].z)
-                uv_side_pt1 = (uv_last_x+uv_curr_x,ground)
-                uv_side_pt0 = (uv_last_x,ground)
-                uv_step_pt0 = (uv_last_x+uv_curr_x, step_pt0.z)
-            else:
-                uv_last_pts0 = (uv_last_x,last_pts[0].z)
-                uv_curr_pts0 = (uv_last_x+uv_curr_x,curr_pts[0].z)
-                uv_side_pt1 = (uv_last_x+uv_curr_x,ground)
-                uv_side_pt0 = (uv_last_x,ground)
-                uv_step_pt0 = (uv_last_x+uv_curr_x, step_pt0.z)
+            uv_last_pts0 = (uv_last_x,last_pts[0].z)
+            uv_curr_pts0 = (uv_last_x+uv_curr_x,curr_pts[0].z)
+            uv_side_pt1 = (uv_last_x+uv_curr_x,side_pt1.z)
+            uv_side_pt0 = (uv_last_x,side_pt0.z)
+            uv_step_pt0 = (uv_last_x+uv_curr_x, step_pt0.z)
                 
             # 樓梯左側面
             if current_height < 0:
-                
                 addRectVertex((last_pts[0],step_pt0, curr_pts[0]), (uv_last_pts0,uv_step_pt0,uv_curr_pts0), .1)
                 addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), (uv_last_pts0,uv_curr_pts0,uv_side_pt1,uv_side_pt0), .1)
             else:
