@@ -320,10 +320,11 @@ def removePiles():
     removeObjects([o for o in bpy.data.objects if curve.name + "_wall" in o.name])
     removeObjects([o for o in bpy.data.objects if curve.name + "_step" in o.name])
 
-def invokeLiveEdit(self, context):
-    def updateMesh(scene):
-        createStairProxy()
+def updateMesh(scene):
+    createStairProxy()
 
+def invokeLiveEdit(self, context):
+    
     if context.window_manager.vic_procedural_stair_update_live:
         startEdit()
         bpy.ops.screen.animation_play()
