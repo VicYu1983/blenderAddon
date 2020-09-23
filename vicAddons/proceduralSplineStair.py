@@ -291,6 +291,9 @@ def startEdit():
     ctx = bpy.context
     if not ctx.object or ctx.object.type != 'CURVE': return
 
+    caches["shading"] = bpy.context.space_data.shading.type
+    bpy.context.space_data.shading.type = 'WIREFRAME'
+
     curve = ctx.object
     caches["curve"] = curve
 
@@ -356,12 +359,12 @@ def endEdit():
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
 
-        # obj.data.materials.append(bpy.data.materials[1])
-
     # 確認對位用的代理物件被清除乾净
     for o in caches["pssProxyPool"]: o.hide_viewport = False
     removeObjects([o for o in bpy.data.objects if "pss_proxy" in o.name])
     caches["pssProxyPool"] = []
+
+    bpy.context.space_data.shading.type = caches["shading"]
 
 def createWallAndPiles():
     
@@ -455,6 +458,7 @@ def removeMeshs():
 
     # 刪掉模型前先把他的材質記下來。等到創建模型的時候再給上
     if curve.name + "_step" in bpy.data.objects.keys():
+        bpy.data.objects[curve.name + "_step"].hide_viewport = False
         materials = bpy.data.objects[curve.name + "_step"].data.materials
         caches["obj_materials"] = materials
 
