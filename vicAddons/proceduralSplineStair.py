@@ -45,7 +45,7 @@ def createStairProxy(isLive = False):
     step_threshold = curve["Step_Threshold"]
     ground = curve["Ground"]
     onGround = curve["OnGround"]
-    uv_scale = .01
+    uv_scale = .1
 
     if width <= 0 or step <= 0: return
     
@@ -73,6 +73,7 @@ def createStairProxy(isLive = False):
     # 記錄前一次處理的右邊墻面的前進距離
     uv_last_right_x = 0
 
+    # 記錄前一次處理的梯面的前進距離
     uv_last_step_x = 0
 
     # 樓梯面的點位置
@@ -152,10 +153,24 @@ def createStairProxy(isLive = False):
                 side_pt2.z = ground
                 side_pt3.z = ground
             else:
-                side_pt0.z += ground
-                side_pt1.z += ground
-                side_pt2.z += ground
-                side_pt3.z += ground
+                if current_height > 0:
+                    if last_isStep:
+                        side_pt0.z -= last_height
+                        side_pt2.z -= last_height
+
+                    if current_isStep:
+                        side_pt1.z -= current_height
+                        side_pt3.z -= current_height
+
+                    side_pt0.z += ground
+                    side_pt1.z += ground
+                    side_pt2.z += ground
+                    side_pt3.z += ground
+                else:
+                    side_pt0.z += ground
+                    side_pt1.z += ground
+                    side_pt2.z += ground
+                    side_pt3.z += ground
 
             # 記錄左右墻面的uv坐標，每一個坐標都對應生成模型的點
             uv_curr_left_x = (side_pt1 - side_pt0)
