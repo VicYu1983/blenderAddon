@@ -58,14 +58,28 @@ def createStairProxy(isLive = False):
     clear()
     pilePoints = []
 
+    # 前一對點
     last_pts = None
+
+    # 前一個階梯的高度
     last_height = 0
+
+    # 前一次處理有沒有形成階梯
     last_isStep = False
+
+    # 記錄前一次處理的左邊墻面的前進距離
     uv_last_right_x = 0
+
+    # 記錄前一次處理的右邊墻面的前進距離
     uv_last_left_x = 0
 
+    # 樓梯面的點位置
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
+
+    # 柱子的位置
     pile_pts = (Vector((0,width/2 - wall_inner_distance,0)), Vector((0,-width/2 + wall_inner_distance,0)))
+
+    # 開始計算
     for i, mat in enumerate(matrices):
         curr_pts = []
         pile_mats = []
@@ -76,14 +90,18 @@ def createStairProxy(isLive = False):
             hori_quat.x = hori_quat.y = 0
             hori_quat.normalize()
 
+            # 把處理好的旋轉矩陣乘上位置矩陣，形成新的4x4矩陣
             hori_mat = hori_quat.to_matrix().to_4x4()
             hori_mat = Matrix.Translation(mat.to_translation()) @ hori_mat
             pos = hori_mat @ pt
             curr_pts.append(pos)
 
+            # 檢查是否需要生成柱子
             is_per = (i % pile_per_step == 0)
             is_first = (i == 1)
             is_last = (i == len(matrices)-1)
+
+            # 需要有前一次處理的資料才能開始計算柱子的真正位置
             if last_pts and (is_per or is_first or is_last):
                 pile_pos = hori_mat @ pile_pts[j]
                 last_pt = last_pts[j]
@@ -92,9 +110,10 @@ def createStairProxy(isLive = False):
                 pile_mat = Matrix.Translation(offset_pt) @ hori_quat.to_matrix().to_4x4()
                 pile_mats.append(pile_mat)
 
+        # 記錄下所有柱子的位置，之後生成用
         pilePoints += pile_mats
 
-        # 第二步開始才有足夠的資訊來計算
+        # 第二次處理時才有足夠的資訊來計算
         if i > 0: 
             step_pt1 = curr_pts[1].copy()
             step_pt0 = curr_pts[0].copy()
@@ -116,11 +135,13 @@ def createStairProxy(isLive = False):
             # 樓梯面
             addRectVertex((last_pts[0],last_pts[1], step_pt1, step_pt0), ((0,0),(0,0),(0,0),(0,0)))
 
+            # 墻面接近地面的點
             side_pt0 = last_pts[0].copy()
             side_pt1 = curr_pts[0].copy()
             side_pt2 = last_pts[1].copy()
             side_pt3 = curr_pts[1].copy()
             
+            # 如果設定由地面升起的話，直接設定地面高度為點的高度
             if onGround:
                 side_pt0.z = ground
                 side_pt1.z = ground
@@ -132,6 +153,7 @@ def createStairProxy(isLive = False):
                 side_pt2.z += ground
                 side_pt3.z += ground
 
+            # 記錄左右墻面的uv坐標，每一個坐標都對應生成模型的點
             uv_curr_right_x = (side_pt1 - side_pt0)
             uv_curr_right_x.z = 0
             uv_curr_right_x = uv_curr_right_x.length
@@ -158,6 +180,8 @@ def createStairProxy(isLive = False):
                 addRectVertex((last_pts[0],step_pt0, curr_pts[0]), (uv_last_pts0,uv_step_pt0,uv_curr_pts0), uv_scale)
                 addRectVertex((last_pts[0],curr_pts[0], side_pt1, side_pt0), (uv_last_pts0,uv_curr_pts0,uv_side_pt1,uv_side_pt0), uv_scale)
             else:
+
+                # 上一次處理時是不是階梯對這次的處理不一樣
                 if last_isStep:
                     step_connect_pt = last_pts[0] + Vector((0,0,-last_height))
                 else:
@@ -173,6 +197,8 @@ def createStairProxy(isLive = False):
                 addRectVertex((last_pts[1],step_pt1, curr_pts[1]), (uv_last_pts1,uv_step_pt1,uv_curr_pts1), uv_scale)
                 addRectVertex((last_pts[1],curr_pts[1], side_pt3, side_pt2), (uv_last_pts1,uv_curr_pts1,uv_side_pt3,uv_side_pt2), uv_scale)
             else:
+
+                # 上一次處理時是不是階梯對這次的處理不一樣
                 if last_isStep:
                     step_connect_pt = last_pts[1] + Vector((0,0,-last_height))
                 else:
@@ -196,12 +222,15 @@ def createStairProxy(isLive = False):
     caches["pilePoints"] = pilePoints
     update()
 
+    # 如果是實時模式，就不要直接創建柱子，只創建代理物件，增進效能。
     if isLive:
 
         for o in caches["pssProxyPool"]: o.hide_viewport = True
 
         curr_focus = bpy.context.object
         for i, pp in enumerate(pilePoints):
+
+            # 這裏用物件池模式，進一步節約效能
             proxy = getPssProxyFromPool(i)
             proxy.matrix_world = pp
             proxy.hide_viewport = False
