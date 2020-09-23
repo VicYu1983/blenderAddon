@@ -61,7 +61,8 @@ def createStairProxy(isLive = False):
     last_pts = None
     last_height = 0
     last_isStep = False
-    uv_last_x = 0
+    uv_last_right_x = 0
+    uv_last_left_x = 0
 
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
     pile_pts = (Vector((0,width/2 - wall_inner_distance,0)), Vector((0,-width/2 + wall_inner_distance,0)))
@@ -131,18 +132,26 @@ def createStairProxy(isLive = False):
                 side_pt2.z += ground
                 side_pt3.z += ground
 
-            uv_curr_x = (side_pt1 - side_pt0).length
+            uv_curr_right_x = (side_pt1 - side_pt0)
+            uv_curr_right_x.z = 0
+            uv_curr_right_x = uv_curr_right_x.length
 
-            uv_last_pts0 = (uv_last_x,last_pts[0].z)
-            uv_last_pts1 = (uv_last_x,last_pts[1].z)
-            uv_curr_pts0 = (uv_last_x+uv_curr_x,curr_pts[0].z)
-            uv_curr_pts1 = (uv_last_x+uv_curr_x,curr_pts[1].z)
-            uv_side_pt0 = (uv_last_x,side_pt0.z)
-            uv_side_pt1 = (uv_last_x+uv_curr_x,side_pt1.z)
-            uv_side_pt2 = (uv_last_x,side_pt2.z)
-            uv_side_pt3 = (uv_last_x+uv_curr_x,side_pt3.z)
-            uv_step_pt0 = (uv_last_x+uv_curr_x, step_pt0.z)
-            uv_step_pt1 = (uv_last_x+uv_curr_x, step_pt1.z)
+            uv_curr_left_x = (side_pt3 - side_pt2)
+            uv_curr_left_x.z = 0
+            uv_curr_left_x = uv_curr_left_x.length
+
+            uv_last_pts0 = (uv_last_right_x,last_pts[0].z)
+            uv_last_pts1 = (uv_last_left_x,last_pts[1].z)
+            uv_curr_pts0 = (uv_last_right_x+uv_curr_right_x,curr_pts[0].z)
+            uv_curr_pts1 = (uv_last_left_x+uv_curr_left_x,curr_pts[1].z)
+
+            uv_side_pt0 = (uv_last_right_x,side_pt0.z)
+            uv_side_pt1 = (uv_last_right_x+uv_curr_right_x,side_pt1.z)
+            uv_side_pt2 = (uv_last_left_x,side_pt2.z)
+            uv_side_pt3 = (uv_last_left_x+uv_curr_left_x,side_pt3.z)
+
+            uv_step_pt0 = (uv_last_right_x+uv_curr_right_x, step_pt0.z)
+            uv_step_pt1 = (uv_last_left_x+uv_curr_left_x, step_pt1.z)
                 
             # 樓梯左側面
             if current_height < 0:
@@ -154,7 +163,7 @@ def createStairProxy(isLive = False):
                 else:
                     step_connect_pt = last_pts[0]
 
-                uv_step_connect_pt = (uv_last_x, step_connect_pt.z)
+                uv_step_connect_pt = (uv_last_right_x, step_connect_pt.z)
                 addRectVertex((last_pts[0],step_pt0, step_connect_pt), (uv_last_pts0,uv_step_pt0,uv_step_connect_pt), uv_scale)
                 addRectVertex((step_connect_pt, step_pt0, side_pt1, side_pt0), (uv_step_connect_pt,uv_step_pt0,uv_side_pt1,uv_side_pt0), uv_scale)
             
@@ -169,6 +178,7 @@ def createStairProxy(isLive = False):
                 else:
                     step_connect_pt = last_pts[1]
 
+                uv_step_connect_pt = (uv_last_left_x, step_connect_pt.z)
                 addRectVertex((last_pts[1],step_pt1, step_connect_pt), (uv_last_pts1,uv_step_pt1,uv_step_connect_pt), uv_scale)
                 addRectVertex((step_connect_pt, step_pt1, side_pt3, side_pt2), (uv_step_connect_pt, uv_step_pt1, uv_side_pt3, uv_side_pt2), uv_scale)
 
@@ -178,7 +188,8 @@ def createStairProxy(isLive = False):
             last_height = current_height
             last_isStep = current_isStep
 
-            uv_last_x += uv_curr_x
+            uv_last_right_x += uv_curr_right_x
+            uv_last_left_x += uv_curr_left_x
             
         last_pts = curr_pts
 
