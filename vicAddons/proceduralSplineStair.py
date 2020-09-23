@@ -6,6 +6,7 @@ from math import *
 caches = {
     "curve":None,
     "obj":None,
+    "obj_materials":None,
     "update":None,
     "clear":None,
     "addRectVertex":None,
@@ -293,7 +294,7 @@ def startEdit():
     curve = ctx.object
     caches["curve"] = curve
 
-    removePiles()
+    removeMeshs()
 
     creator = prepareAndCreateMesh(curve.name + "_step")
     obj = creator["obj"]
@@ -337,6 +338,10 @@ def endEdit():
     step_mesh = curve.name + "_step"
     if step_mesh in bpy.data.objects.keys(): smooth_list.append( step_mesh )
 
+    if caches["obj_materials"]:
+        obj_materials = caches["obj_materials"]
+        for mat in obj_materials: bpy.data.objects[step_mesh].data.materials.append(mat)
+
     wall_mesh = curve.name + "_wall"
     if wall_mesh in bpy.data.objects.keys(): smooth_list.append( wall_mesh )
 
@@ -351,7 +356,7 @@ def endEdit():
         bpy.ops.object.editmode_toggle()
         bpy.ops.object.select_all(action='DESELECT')
 
-        obj.data.materials.append(bpy.data.materials[1])
+        # obj.data.materials.append(bpy.data.materials[1])
 
     # 確認對位用的代理物件被清除乾净
     for o in caches["pssProxyPool"]: o.hide_viewport = False
@@ -379,6 +384,7 @@ def createWallAndPiles():
     wall = curve["Wall"]
     if wall == "" or wall not in bpy.data.objects: return
 
+    
     creator = prepareAndCreateMesh(curve.name + "_wall")
     obj = creator["obj"]
     update = creator["update"]
@@ -389,6 +395,8 @@ def createWallAndPiles():
 
     copyFrom = bpy.data.objects[wall]
     copyFrom_length = copyFrom.dimensions.x
+
+    materials = copyFrom.data.materials
 
     def createWall(curr_pp, prev_pp):
         
@@ -439,8 +447,17 @@ def createWallAndPiles():
 
     update()
 
-def removePiles():
+    # 上材質
+    for mat in materials: obj.data.materials.append(mat)
+
+def removeMeshs():
     curve = caches["curve"]
+
+    # 刪掉模型前先把他的材質記下來。等到創建模型的時候再給上
+    if curve.name + "_step" in bpy.data.objects.keys():
+        materials = bpy.data.objects[curve.name + "_step"].data.materials
+        caches["obj_materials"] = materials
+
     removeObjects([o for o in bpy.data.objects if curve.name + "_pile" in o.name])
     removeObjects([o for o in bpy.data.objects if curve.name + "_wall" in o.name])
     removeObjects([o for o in bpy.data.objects if curve.name + "_step" in o.name])
