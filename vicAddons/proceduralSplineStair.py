@@ -76,6 +76,9 @@ def createStairProxy(isLive = False):
     # 記錄前一次處理的梯面的前進距離
     uv_last_step_x = 0
 
+    # 記錄前一次處理的底部的前進距離
+    uv_last_bottom_x = 0
+
     # 樓梯面的點位置
     pts = (Vector((0,width/2,0)), Vector((0,-width/2,0)))
 
@@ -137,8 +140,6 @@ def createStairProxy(isLive = False):
 
             # 樓梯面
             addRectVertex((last_pts[0],last_pts[1], step_pt1, step_pt0), ((0,uv_last_step_x),(width,uv_last_step_x),(width,uv_last_step_x+stepLength),(0,uv_last_step_x+stepLength)), uv_scale)
-
-            uv_last_step_x += (stepLength + abs(current_height))
 
             # 墻面接近地面的點
             side_pt0 = last_pts[0].copy()
@@ -227,13 +228,19 @@ def createStairProxy(isLive = False):
                 addRectVertex((step_connect_pt, step_pt1, side_pt3, side_pt2), (uv_step_connect_pt, uv_step_pt1, uv_side_pt3, uv_side_pt2), uv_scale)
 
             # 底部mesh
-            addRectVertex((side_pt0, side_pt1, side_pt3, side_pt2), (uv_side_pt0, uv_side_pt1, uv_side_pt3, uv_side_pt2), uv_scale)
+            addRectVertex((side_pt0, side_pt1, side_pt3, side_pt2), ((0,uv_last_bottom_x), (0, uv_last_bottom_x+stepLength),(width, uv_last_bottom_x+stepLength), (width, uv_last_bottom_x)), uv_scale)
                 
             last_height = current_height
             last_isStep = current_isStep
 
             uv_last_left_x += uv_curr_left_x
             uv_last_right_x += uv_curr_right_x
+
+            if current_isStep:
+                uv_last_step_x += (stepLength + abs(current_height))
+            else:
+                uv_last_step_x += stepLength
+            uv_last_bottom_x += stepLength
             
         last_pts = curr_pts
 
