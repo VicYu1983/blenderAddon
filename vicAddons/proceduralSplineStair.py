@@ -11,8 +11,26 @@ caches = {
     "clear":None,
     "addRectVertex":None,
     "pilePoints":None,
-    "pssProxyPool":[]
+    "pssProxyPool":[],
+    "register":False
 }
+
+def onSceneUpdate():
+    if not checkAndToggle(bpy.context):
+        return
+    curve = bpy.context.object
+    if "Width" not in curve: return
+
+    bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
+    bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance = curve["Wall_Inner_Distance"]
+    bpy.context.window_manager.vic_procedural_stair_update_pile_per_step = curve["Pile_Per_Step"]
+    bpy.context.window_manager.vic_procedural_stair_update_pile_z = curve["Pile_Z"]
+    bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
+    bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
+    bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
+    bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
+    bpy.context.window_manager.vic_procedural_stair_update_pile = curve["Pile"]
+    bpy.context.window_manager.vic_procedural_stair_update_wall = curve["Wall"]
 
 def createStairManager():
     for obj in bpy.data.objects:
@@ -322,6 +340,16 @@ class vic_procedural_stair_update(bpy.types.Operator):
 def startEdit():
     ctx = bpy.context
     if not ctx.object or ctx.object.type != 'CURVE': return
+
+    if not caches["register"]:
+        subscribe_to = bpy.types.LayerObjects, "active"
+        bpy.msgbus.subscribe_rna(
+            key = subscribe_to,
+            owner = bpy.context.scene,
+            args = (),
+            notify = onSceneUpdate
+        )
+        caches["register"] = True
 
     caches["shading"] = bpy.context.space_data.shading.type
     bpy.context.space_data.shading.type = 'WIREFRAME'
