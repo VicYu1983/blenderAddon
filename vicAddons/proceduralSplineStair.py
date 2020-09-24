@@ -271,6 +271,12 @@ def getPssProxyFromPool(i):
     pssProxyPool.append(proxy)
     return proxy
 
+def checkAndToggle(ctx):
+    if not ctx.object or ctx.object.type != 'CURVE': 
+        return False
+    if ctx.mode != 'OBJECT': bpy.ops.object.editmode_toggle()
+    return True
+
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
@@ -278,7 +284,7 @@ class vic_procedural_stair_update(bpy.types.Operator):
 
     def execute(self, context):
         ctx = bpy.context
-        if not ctx.object or ctx.object.type != 'CURVE': 
+        if not checkAndToggle(context):
             self.report({'INFO'}, "Please select at least one CURVE object.")
             return {'FINISHED'}
         currentFocus = ctx.object
@@ -319,7 +325,7 @@ def startEdit():
     addProps(curve, "Pile_Per_Step", 5)
     addProps(curve, "Pile_Z", 0)
     addProps(curve, "Step", 50)
-    addProps(curve, "Step_Threshold", .2)
+    addProps(curve, "Step_Threshold", 0)
     addProps(curve, "OnGround", 0)
     addProps(curve, "Ground", -1)
 
@@ -474,7 +480,7 @@ def invokeLiveEdit(self, context):
     
     if context.window_manager.vic_procedural_stair_update_live:
 
-        if not context.object or context.object.type != 'CURVE': 
+        if not checkAndToggle(context):
             context.window_manager.vic_procedural_stair_update_live = False
             return
 
@@ -484,6 +490,8 @@ def invokeLiveEdit(self, context):
             bpy.app.handlers.frame_change_post.remove(updateMesh)
         bpy.app.handlers.frame_change_post.append(updateMesh)
     else:
+
+        checkAndToggle(context)
 
         curr_focus = bpy.context.object
 
@@ -530,7 +538,7 @@ bpy.types.WindowManager.vic_procedural_stair_update_pile_z = bpy.props.FloatProp
 
 bpy.types.WindowManager.vic_procedural_stair_update_step_threshold = bpy.props.FloatProperty(
                                                             name='Step Threshold',
-                                                            default=.2,
+                                                            default=0,
                                                             min=0.0,
                                                             description='Steps will be generated when the height between nodes exceeds this height')
 
