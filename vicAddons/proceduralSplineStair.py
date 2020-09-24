@@ -267,13 +267,14 @@ def getPssProxyFromPool(i):
     if i < len(pssProxyPool) - 1: return pssProxyPool[i]
     bpy.ops.object.empty_add(type='ARROWS')
     proxy = bpy.context.object
-    proxy.name = "pss_proxy"
+    proxy.name = "auto_build_please_ignore"
     pssProxyPool.append(proxy)
     return proxy
 
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
+    bl_description='Please Select One Spline With Object Mode'
 
     def execute(self, context):
         ctx = bpy.context
@@ -361,7 +362,7 @@ def endEdit():
 
     # 確認對位用的代理物件被清除乾净
     for o in caches["pssProxyPool"]: o.hide_viewport = False
-    removeObjects([o for o in bpy.data.objects if "pss_proxy" in o.name])
+    removeObjects([o for o in bpy.data.objects if "auto_build_please_ignore" in o.name])
     caches["pssProxyPool"] = []
 
     bpy.context.space_data.shading.type = caches["shading"]
@@ -472,6 +473,11 @@ def updateMesh(scene):
 def invokeLiveEdit(self, context):
     
     if context.window_manager.vic_procedural_stair_update_live:
+
+        if not context.object or context.object.type != 'CURVE': 
+            context.window_manager.vic_procedural_stair_update_live = False
+            return
+
         startEdit()
         bpy.ops.screen.animation_play()
         if updateMesh in bpy.app.handlers.frame_change_post:
@@ -492,44 +498,53 @@ def invokeLiveEdit(self, context):
 
 bpy.types.WindowManager.vic_procedural_stair_update_live =   bpy.props.BoolProperty(
                                                             default = False,
-                                                            update = invokeLiveEdit)
+                                                            update = invokeLiveEdit,
+                                                            description='Please Select One Spline With Object Mode')
 
 bpy.types.WindowManager.vic_procedural_stair_update_onGround =   bpy.props.BoolProperty(
-                                                                default = False)
+                                                                default = False,
+                                                                description='Whether the bottom is close to the ground')
 
 bpy.types.WindowManager.vic_procedural_stair_update_width = bpy.props.FloatProperty(
                                                             name='Width',
                                                             default=.5,
-                                                            min=0.01)
+                                                            min=0.01,
+                                                            description='The width of the stairs')
 
 bpy.types.WindowManager.vic_procedural_stair_update_wall_inner_distance = bpy.props.FloatProperty(
                                                             name='Wall Inner Distance',
-                                                            default=.1)
+                                                            default=.1,
+                                                            description='Inner distance of wall and pillar')
 
 bpy.types.WindowManager.vic_procedural_stair_update_pile_per_step = bpy.props.IntProperty(
                                                             name='Pile Per Step',
                                                             default=5,
                                                             min=1,
-                                                            step=1)
+                                                            step=1,
+                                                            description='Every few steps will produce a pillar')
 
 bpy.types.WindowManager.vic_procedural_stair_update_pile_z = bpy.props.FloatProperty(
                                                             name='Pile Z',
-                                                            default=0)
+                                                            default=0,
+                                                            description='Height of wall and pillar')
 
 bpy.types.WindowManager.vic_procedural_stair_update_step_threshold = bpy.props.FloatProperty(
                                                             name='Step Threshold',
                                                             default=.2,
-                                                            min=0.0)
+                                                            min=0.0,
+                                                            description='Steps will be generated when the height between nodes exceeds this height')
 
 bpy.types.WindowManager.vic_procedural_stair_update_step = bpy.props.IntProperty(
                                                             name='Step',
                                                             default=5,
                                                             min=2,
-                                                            step=1)
+                                                            step=1,
+                                                            description='Number of steps')
 
 bpy.types.WindowManager.vic_procedural_stair_update_ground = bpy.props.FloatProperty(
                                                             name='Ground',
-                                                            default=-1)                                                            
+                                                            default=-1,
+                                                            description='The thickness of the stairs, if it is a pattern that is close to the ground, this parameter is the height of the ground')
 
 class vic_procedural_stair_update_panel(bpy.types.Panel):
     bl_category = "Vic Addons"
