@@ -1,62 +1,30 @@
-# VicTool
+# VicAddons
 
-## 2.79 的連接改到 https://1drv.ms/u/s!Apea4elXUnuxhJIhENBdzd0qdQY1PQ (不再更新)
+## 2.90 下載 https://drive.google.com/file/d/1JC_PHu37mJ81T40-0AsuCquVrYj4womN/view?usp=sharing
 
 ## 安裝方法
 
-下載後解壓，如圖複製vicTool資料夾
+Edit => Preferences => Add-ons => Install => 點選下載的zip => 打開addon => 點擊 N 打開界面
 
-![Alt text](/imgs/img3.png)
+![Alt text](/imgs/vicAddons/pss_interface.jpg)
 
-到安裝的blender addon資料夾下（你的blender目錄\2.80\scripts\addons），在blender中啓用
+### Spline Stair Generator
 
-![Alt text](/imgs/img4.png)
+![Alt text](/imgs/vicAddons/pss_perform.gif)
 
-在視圖中按N鍵打開右側選單就可以看到
-
-![Alt text](/imgs/img5.png)
-
-# VicTool功能介紹
-
-![Alt text](/imgs/img1.png)
-
-![Alt text](/imgs/img2.png)
-
-## Action 是一些流程的快速鍵
-
-### Create Mirror Cube 
-
-快速創建有mirror modifier並切一半的立方體，如果覺得每次拉模型前都要做一樣的事很煩，就可以試試這個功能。
-
-![Alt text](/imgs/CreateMirrorCube.gif)
-
-### Create Camera Target
-
-快速創建look at modifier並新增目標物件。方便快速的設定需要面向對像的物件。
-
-![Alt text](/imgs/CreateLookAt.gif)
-
-### Particle To Rigidbodys
-
-可以建立剛體物理的粒子效果
-
-![Alt text](/imgs/particlesToRigidbody.gif)
-
-以下是介紹影片
-
-[![Particle To Rigidbodys](http://img.youtube.com/vi/G61hp533SEk/0.jpg)](https://www.youtube.com/watch?v=G61hp533SEk "Particle To Rigidbodys")
+教學 https://docs.google.com/document/d/1g6ggwmvVlbe3UNW7qg-WUbgkTnyOrpukyj0RRYH78Ps/edit?usp=sharing
 
 ### Stair Generator
 
 程序化階梯
 
-![Alt text](/imgs/blenderStair.gif)
+![Alt text](/imgs/vicAddons/blenderStair.gif)
 
 ### Bridge Generator
 
 程序化拱橋
 
-![Alt text](/imgs/blenderBridge.gif)
+![Alt text](/imgs/vicAddons/blenderBridge.gif)
 
 ### Lantern Generator
 
@@ -64,23 +32,71 @@
 
 一、創建生成點
 
-![Alt text](/imgs/createProxy.gif)
+![Alt text](/imgs/vicAddons/createProxy.gif)
 
 二、創建繩子
 
-![Alt text](/imgs/createConnect.gif)
+![Alt text](/imgs/vicAddons/createConnect.gif)
 
 三、創建燈籠
 
-![Alt text](/imgs/createLantern.gif)
+![Alt text](/imgs/vicAddons/createLantern.gif)
 
 四、修改繩子的生成
 
-![Alt text](/imgs/changeRope.gif)
+![Alt text](/imgs/vicAddons/changeRope.gif)
 
 基本教學
 
-![Alt text](/imgs/lanternTutorial.gif)
+![Alt text](/imgs/vicAddons/lanternTutorial.gif)
+
+# Vic Tools
+
+## 2.79 的連接改到 https://1drv.ms/u/s!Apea4elXUnuxhJIhENBdzd0qdQY1PQ (不再更新)
+
+## 安裝方法
+
+下載後解壓，如圖複製vicTool資料夾
+
+![Alt text](/imgs/vicTools/img3.png)
+
+到安裝的blender addon資料夾下（你的blender目錄\2.80\scripts\addons），在blender中啓用
+
+![Alt text](/imgs/vicTools/img4.png)
+
+在視圖中按N鍵打開右側選單就可以看到
+
+![Alt text](/imgs/vicTools/img5.png)
+
+# VicTool功能介紹
+
+![Alt text](/imgs/vicTools/img1.png)
+
+![Alt text](/imgs/vicTools/img2.png)
+
+## Action 是一些流程的快速鍵
+
+### Create Mirror Cube 
+
+快速創建有mirror modifier並切一半的立方體，如果覺得每次拉模型前都要做一樣的事很煩，就可以試試這個功能。
+
+![Alt text](/imgs/vicTools/CreateMirrorCube.gif)
+
+### Create Camera Target
+
+快速創建look at modifier並新增目標物件。方便快速的設定需要面向對像的物件。
+
+![Alt text](/imgs/vicTools/CreateLookAt.gif)
+
+### Particle To Rigidbodys
+
+可以建立剛體物理的粒子效果
+
+![Alt text](/imgs/vicTools/particlesToRigidbody.gif)
+
+以下是介紹影片
+
+[![Particle To Rigidbodys](http://img.youtube.com/vi/G61hp533SEk/0.jpg)](https://www.youtube.com/watch?v=G61hp533SEk "Particle To Rigidbodys")
 
 ### Select By Name
 
