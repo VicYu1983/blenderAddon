@@ -277,17 +277,37 @@ def checkAndToggle(ctx):
     if ctx.mode != 'OBJECT': bpy.ops.object.editmode_toggle()
     return True
 
+class vic_procedural_stair_get_props(bpy.types.Operator):
+    bl_idname = "vic.vic_procedural_stair_get_props"
+    bl_label = "Get Properties"
+    
+    def execute(self, context):
+        if not checkAndToggle(context):
+            self.report({'INFO'}, "Please select at least one CURVE object.")
+            return {'FINISHED'}
+        curve = context.object
+
+        bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
+        bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance = curve["Wall_Inner_Distance"]
+        bpy.context.window_manager.vic_procedural_stair_update_pile_per_step = curve["Pile_Per_Step"]
+        bpy.context.window_manager.vic_procedural_stair_update_pile_z = curve["Pile_Z"]
+        bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
+        bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
+        bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
+        bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
+        return {'FINISHED'}
+
+
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
     bl_description='Please Select One Spline With Object Mode'
 
     def execute(self, context):
-        ctx = bpy.context
         if not checkAndToggle(context):
             self.report({'INFO'}, "Please select at least one CURVE object.")
             return {'FINISHED'}
-        currentFocus = ctx.object
+        currentFocus = context.object
         startEdit()
         createStairProxy()
         endEdit()
@@ -320,23 +340,14 @@ def startEdit():
     
     addProps(curve, "Pile", "")
     addProps(curve, "Wall", "")
-    addProps(curve, "Width", 1)
-    addProps(curve, "Wall_Inner_Distance", .1)
-    addProps(curve, "Pile_Per_Step", 5)
-    addProps(curve, "Pile_Z", 0)
-    addProps(curve, "Step", 50)
-    addProps(curve, "Step_Threshold", 0)
-    addProps(curve, "OnGround", 0)
-    addProps(curve, "Ground", -1)
-
-    bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
-    bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance = curve["Wall_Inner_Distance"]
-    bpy.context.window_manager.vic_procedural_stair_update_pile_per_step = curve["Pile_Per_Step"]
-    bpy.context.window_manager.vic_procedural_stair_update_pile_z = curve["Pile_Z"]
-    bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
-    bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
-    bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
-    bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
+    addProps(curve, "Width", bpy.context.window_manager.vic_procedural_stair_update_width)
+    addProps(curve, "Wall_Inner_Distance", bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance)
+    addProps(curve, "Pile_Per_Step", bpy.context.window_manager.vic_procedural_stair_update_pile_per_step)
+    addProps(curve, "Pile_Z", bpy.context.window_manager.vic_procedural_stair_update_pile_z)
+    addProps(curve, "Step", bpy.context.window_manager.vic_procedural_stair_update_step)
+    addProps(curve, "Step_Threshold", bpy.context.window_manager.vic_procedural_stair_update_step_threshold)
+    addProps(curve, "OnGround", bpy.context.window_manager.vic_procedural_stair_update_onGround)
+    addProps(curve, "Ground", bpy.context.window_manager.vic_procedural_stair_update_ground)
 
 def endEdit():
     curve = caches["curve"]
@@ -565,6 +576,7 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         
         col = layout.column(align=True)
         col.operator(vic_procedural_stair_update.bl_idname)
+        col.operator(vic_procedural_stair_get_props.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
         col.prop(context.window_manager, 'vic_procedural_stair_update_wall_inner_distance')
