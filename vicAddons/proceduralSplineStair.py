@@ -596,16 +596,14 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.operator(vic_procedural_stair_update.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col = layout.column(align=True)
-        
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
         col.prop(context.window_manager, 'vic_procedural_stair_update_wall_inner_distance')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
         col.prop(context.window_manager, 'vic_procedural_stair_update_pile_per_step')
         col.prop(context.window_manager, 'vic_procedural_stair_update_pile_z')
-        col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
         col.prop(context.window_manager, 'vic_procedural_stair_update_ground')
-        
+        col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
         col = layout.column(align=True)
         col.prop_search(context.window_manager, "vic_procedural_stair_update_wall", bpy.data, "objects")
         col.prop_search(context.window_manager, "vic_procedural_stair_update_pile", bpy.data, "objects")
