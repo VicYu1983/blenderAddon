@@ -295,6 +295,8 @@ class vic_procedural_stair_get_props(bpy.types.Operator):
         bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
         bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
         bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
+        bpy.context.window_manager.vic_procedural_stair_update_pile = curve["Pile"]
+        bpy.context.window_manager.vic_procedural_stair_update_wall = curve["Wall"]
         return {'FINISHED'}
 
 
@@ -338,16 +340,16 @@ def startEdit():
     caches["clear"] = clear
     caches["pilePoints"] = []
     
-    addProps(curve, "Pile", "")
-    addProps(curve, "Wall", "")
-    addProps(curve, "Width", bpy.context.window_manager.vic_procedural_stair_update_width)
-    addProps(curve, "Wall_Inner_Distance", bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance)
-    addProps(curve, "Pile_Per_Step", bpy.context.window_manager.vic_procedural_stair_update_pile_per_step)
-    addProps(curve, "Pile_Z", bpy.context.window_manager.vic_procedural_stair_update_pile_z)
-    addProps(curve, "Step", bpy.context.window_manager.vic_procedural_stair_update_step)
-    addProps(curve, "Step_Threshold", bpy.context.window_manager.vic_procedural_stair_update_step_threshold)
-    addProps(curve, "OnGround", bpy.context.window_manager.vic_procedural_stair_update_onGround)
-    addProps(curve, "Ground", bpy.context.window_manager.vic_procedural_stair_update_ground)
+    addProps(curve, "Pile", bpy.context.window_manager.vic_procedural_stair_update_pile, True)
+    addProps(curve, "Wall", bpy.context.window_manager.vic_procedural_stair_update_wall, True)
+    addProps(curve, "Width", bpy.context.window_manager.vic_procedural_stair_update_width, True)
+    addProps(curve, "Wall_Inner_Distance", bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance, True)
+    addProps(curve, "Pile_Per_Step", bpy.context.window_manager.vic_procedural_stair_update_pile_per_step, True)
+    addProps(curve, "Pile_Z", bpy.context.window_manager.vic_procedural_stair_update_pile_z, True)
+    addProps(curve, "Step", bpy.context.window_manager.vic_procedural_stair_update_step, True)
+    addProps(curve, "Step_Threshold", bpy.context.window_manager.vic_procedural_stair_update_step_threshold, True)
+    addProps(curve, "OnGround", bpy.context.window_manager.vic_procedural_stair_update_onGround, True)
+    addProps(curve, "Ground", bpy.context.window_manager.vic_procedural_stair_update_ground, True)
 
 def endEdit():
     curve = caches["curve"]
@@ -565,6 +567,14 @@ bpy.types.WindowManager.vic_procedural_stair_update_ground = bpy.props.FloatProp
                                                             default=-1,
                                                             description='The thickness of the stairs, if it is a pattern that is close to the ground, this parameter is the height of the ground')
 
+bpy.types.WindowManager.vic_procedural_stair_update_pile = bpy.props.StringProperty(
+                                                            name='Pile',
+                                                            default="")
+
+bpy.types.WindowManager.vic_procedural_stair_update_wall = bpy.props.StringProperty(
+                                                            name='Wall',
+                                                            default="")
+
 class vic_procedural_stair_update_panel(bpy.types.Panel):
     bl_category = "Vic Addons"
     bl_space_type = "VIEW_3D"
@@ -580,12 +590,18 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
         col.prop(context.window_manager, 'vic_procedural_stair_update_wall_inner_distance')
-        col.prop(context.window_manager, 'vic_procedural_stair_update_pile_per_step')
-        col.prop(context.window_manager, 'vic_procedural_stair_update_pile_z')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step_threshold')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_pile_per_step')
+        col.prop(context.window_manager, 'vic_procedural_stair_update_pile_z')
         col.prop(context.window_manager, 'vic_procedural_stair_update_onGround', text="On Ground")
         col.prop(context.window_manager, 'vic_procedural_stair_update_ground')
+        
+        col = layout.column(align=True)
+        col.prop_search(context.window_manager, "vic_procedural_stair_update_wall", bpy.data, "objects")
+        col.prop_search(context.window_manager, "vic_procedural_stair_update_pile", bpy.data, "objects")
+        
+        
 
 
         
