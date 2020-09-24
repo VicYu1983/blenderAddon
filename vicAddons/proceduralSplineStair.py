@@ -280,7 +280,8 @@ def checkAndToggle(ctx):
 class vic_procedural_stair_get_props(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_get_props"
     bl_label = "Get Properties"
-    
+    bl_options = {'REGISTER', 'UNDO'}
+
     def execute(self, context):
         if not checkAndToggle(context):
             self.report({'INFO'}, "Please select at least one CURVE object.")
@@ -304,8 +305,10 @@ class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
     bl_description='Please Select One Spline With Object Mode'
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
+        
         if not checkAndToggle(context):
             self.report({'INFO'}, "Please select at least one CURVE object.")
             return {'FINISHED'}
@@ -329,6 +332,7 @@ def startEdit():
     removeMeshs()
 
     creator = prepareAndCreateMesh(curve.name + "_step")
+     
     obj = creator["obj"]
     update = creator["update"]
     clear = creator["clear"]
@@ -551,13 +555,13 @@ bpy.types.WindowManager.vic_procedural_stair_update_pile_z = bpy.props.FloatProp
 
 bpy.types.WindowManager.vic_procedural_stair_update_step_threshold = bpy.props.FloatProperty(
                                                             name='Step Threshold',
-                                                            default=0,
+                                                            default=0.01,
                                                             min=0.0,
                                                             description='Steps will be generated when the height between nodes exceeds this height')
 
 bpy.types.WindowManager.vic_procedural_stair_update_step = bpy.props.IntProperty(
                                                             name='Step',
-                                                            default=5,
+                                                            default=20,
                                                             min=2,
                                                             step=1,
                                                             description='Number of steps')
@@ -586,8 +590,10 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         
         col = layout.column(align=True)
         col.operator(vic_procedural_stair_update.bl_idname)
-        col.operator(vic_procedural_stair_get_props.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
+        col = layout.column(align=True)
+        col.operator(vic_procedural_stair_get_props.bl_idname)
+        
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
         col.prop(context.window_manager, 'vic_procedural_stair_update_wall_inner_distance')
         col.prop(context.window_manager, 'vic_procedural_stair_update_step')
