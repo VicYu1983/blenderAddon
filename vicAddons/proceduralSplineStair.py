@@ -326,6 +326,7 @@ def startEdit():
             notify = onSceneUpdate
         )
         caches["register"] = True
+        onSceneUpdate()
 
     caches["shading"] = bpy.context.space_data.shading.type
     bpy.context.space_data.shading.type = 'WIREFRAME'
