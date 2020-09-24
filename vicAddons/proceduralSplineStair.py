@@ -295,30 +295,6 @@ def checkAndToggle(ctx):
     if ctx.mode != 'OBJECT': bpy.ops.object.editmode_toggle()
     return True
 
-class vic_procedural_stair_get_props(bpy.types.Operator):
-    bl_idname = "vic.vic_procedural_stair_get_props"
-    bl_label = "Get Properties"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        if not checkAndToggle(context):
-            self.report({'INFO'}, "Please select at least one CURVE object.")
-            return {'FINISHED'}
-        curve = context.object
-
-        bpy.context.window_manager.vic_procedural_stair_update_width = curve["Width"]
-        bpy.context.window_manager.vic_procedural_stair_update_wall_inner_distance = curve["Wall_Inner_Distance"]
-        bpy.context.window_manager.vic_procedural_stair_update_pile_per_step = curve["Pile_Per_Step"]
-        bpy.context.window_manager.vic_procedural_stair_update_pile_z = curve["Pile_Z"]
-        bpy.context.window_manager.vic_procedural_stair_update_step = curve["Step"]
-        bpy.context.window_manager.vic_procedural_stair_update_step_threshold = curve["Step_Threshold"]
-        bpy.context.window_manager.vic_procedural_stair_update_ground = curve["Ground"]
-        bpy.context.window_manager.vic_procedural_stair_update_onGround = curve["OnGround"]
-        bpy.context.window_manager.vic_procedural_stair_update_pile = curve["Pile"]
-        bpy.context.window_manager.vic_procedural_stair_update_wall = curve["Wall"]
-        return {'FINISHED'}
-
-
 class vic_procedural_stair_update(bpy.types.Operator):
     bl_idname = "vic.vic_procedural_stair_update"
     bl_label = "Create & Update"
@@ -620,7 +596,6 @@ class vic_procedural_stair_update_panel(bpy.types.Panel):
         col.operator(vic_procedural_stair_update.bl_idname)
         col.prop(context.window_manager, 'vic_procedural_stair_update_live', text="Live Edit", toggle=True, icon="EDITMODE_HLT")
         col = layout.column(align=True)
-        col.operator(vic_procedural_stair_get_props.bl_idname)
         
         col.prop(context.window_manager, 'vic_procedural_stair_update_width')
         col.prop(context.window_manager, 'vic_procedural_stair_update_wall_inner_distance')
