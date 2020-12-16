@@ -137,7 +137,7 @@ class vic_procedural_lantern(bpy.types.Operator):
         lanternRandomOffset = lanternManager["LanternRandomOffset"]
 
         creator = prepareAndCreateMesh("Ropes")
-        obj = creator["creator"]
+        obj = creator["obj"]
         update = creator["update"]
         addRectVertex = creator["addRectVertex"]
 
