@@ -442,13 +442,21 @@ def createWallAndPiles():
             proj_dir.z = 0
             proj_dir.normalize()
 
-            # 確認角度方向，先把方向正規化，再檢查y是正的還是負的
+            # 確認角度方向，先把方向正規化，再檢查y是正的還是負的，已此來確認兩個向量取角度時，順序是一致的
+            # 取得當前方向的水平旋轉矩陣
+            rot_mat = Matrix.Rotation(atan2(proj_dir.y, proj_dir.x), 4, 'Z')
+
+            # 以旋轉矩陣而言，倒置矩陣等於逆矩陣。這裏取得反方向的水平旋轉矩陣
+            rot_mat.transpose() # rot_mat.inverse() 意思一樣
+            
+            # 用叉乘取得兩個向量的垂直向量，代表y軸。這個時候因爲我們不能確定取得的垂直向量都能永遠朝同一個方向，所以有下一步
             side_dir = direct.cross(proj_dir)
             side_dir.normalize()
-            rot_mat = Matrix.Rotation(atan2(direct.y, direct.x), 4, 'Z')
-            rot_mat.transpose()
+
+            # 把side方向乘上【反方向的水平旋轉矩陣】，就可以把他轉回正規化的方向(0,1,0) or (0,-1,0)
             side_dir = rot_mat @ side_dir
 
+            # 有了正規化的方向后，就可以依次來確保取角度的時候，不會取到相反的角度
             # angle 等於 acos(direct.dot(proj_dir))，但是這樣算會有不合法參數的問題，改成用内建的算法
             pitch = direct.angle(proj_dir) * side_dir.y
 
