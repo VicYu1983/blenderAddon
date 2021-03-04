@@ -202,7 +202,11 @@ class vic_spring_bone(bpy.types.Operator):
                     #bpy.ops.transform.resize(value=(.1,.1,.1))
                     debug_views.append( bpy.context.object )
             
-            for i in range( start_frame, end_frame ): 
+            # 不曉得是不是blender本身的毛病，前几幀的bake會有點問題，幀數剛好為骨頭的數目
+            # 這裏預留會出問題的幀，提前bake
+            prebake = start_frame - len(bones)
+
+            for i in range( prebake, end_frame ): 
                 bpy.context.scene.frame_set( i )
                 
                 root = getTailMatrix( body, root_bone, root_bone.tail )
@@ -210,14 +214,19 @@ class vic_spring_bone(bpy.types.Operator):
                 setRotation( root, pts, up_vec )  
                 addForce( pts, pts_spd, root, root_locs, pos_data, gravity )
                 limitDistance( root, pts, dist_data )   
-                mapToBone( i, start_frame, body, root, root_bone, bones, pts )
+                mapToBone( i, prebake, body, root, root_bone, bones, pts )
                 
                 # maybe will add new method for create fake bone
                 if debugView:
-                    syncToDebugView( i, start_frame, body, debug_views, pts )
+                    syncToDebugView( i, prebake, body, debug_views, pts )
                 
                 print( 'On Bone: ' + root_bone.name + ', Frame Complete: ' + str( i ) )
-            bpy.context.scene.frame_set( 1 )             
+            
+            # 這裏再刪掉提前bake的幀
+            for f in range(prebake, start_frame):
+                for b in bones: b.keyframe_delete(data_path="rotation_quaternion" ,frame=f) 
+
+            bpy.context.scene.frame_set( start_frame )             
         
     def execute(self, context):
         if context.object == None:
