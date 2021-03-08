@@ -34,25 +34,13 @@ Edit => Preferences => Add-ons => Install => 點選下載的zip => 打開addon =
 
 程序化燈籠
 
-一、創建生成點
-
-![Alt text](/imgs/vicAddons/createProxy.gif)
-
-二、創建繩子
-
-![Alt text](/imgs/vicAddons/createConnect.gif)
-
-三、創建燈籠
-
 ![Alt text](/imgs/vicAddons/createLantern.gif)
 
-四、修改繩子的生成
-
-![Alt text](/imgs/vicAddons/changeRope.gif)
-
-基本教學
+教學gif
 
 ![Alt text](/imgs/vicAddons/lanternTutorial.gif)
+
+教學 https://docs.google.com/document/d/1RlXnlFQZT2g0P5HSZCrkWiOFY4e0oVgeh2qvvbo-N5Q/edit?usp=sharing
 
 # Vic Tools
 
