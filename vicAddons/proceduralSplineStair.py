@@ -15,7 +15,39 @@ caches = {
     "register":False
 }
 
+def registerUpdateWhenSelect():
+
+    if not caches["register"]:
+        subscribe_to = bpy.types.LayerObjects, "active"
+        bpy.msgbus.subscribe_rna(
+            key = subscribe_to,
+            owner = {},
+            args = (),
+            notify = onSceneUpdate
+        )
+        caches["register"] = True
+
+        print("registerUpdateWhenSelect==============")
+
+def onOpenFile():
+    print("onOpenFile==============")
+    caches["register"] = False
+    registerUpdateWhenSelect()
+
+def register():
+    print("register==============")
+    if onOpenFile not in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.append(onOpenFile)
+    registerUpdateWhenSelect()
+
+def unregister():
+    print("unregister==============")
+    if onOpenFile in bpy.app.handlers.load_post:
+        bpy.app.handlers.load_post.remove(onOpenFile)
+
 def onSceneUpdate():
+    print("onSceneUpdate===========")
+
     if not checkAndToggle(bpy.context):
         return
     curve = bpy.context.object
@@ -317,16 +349,16 @@ def startEdit():
     ctx = bpy.context
     if not ctx.object or ctx.object.type != 'CURVE': return
 
-    if not caches["register"]:
-        subscribe_to = bpy.types.LayerObjects, "active"
-        bpy.msgbus.subscribe_rna(
-            key = subscribe_to,
-            owner = bpy.context.scene,
-            args = (),
-            notify = onSceneUpdate
-        )
-        caches["register"] = True
-        onSceneUpdate()
+    # if not caches["register"]:
+    #     subscribe_to = bpy.types.LayerObjects, "active"
+    #     bpy.msgbus.subscribe_rna(
+    #         key = subscribe_to,
+    #         owner = bpy.context.scene,
+    #         args = (),
+    #         notify = onSceneUpdate
+    #     )
+    #     caches["register"] = True
+    #     onSceneUpdate()
 
     caches["shading"] = bpy.context.space_data.shading.type
     bpy.context.space_data.shading.type = 'WIREFRAME'
