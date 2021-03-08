@@ -20,9 +20,9 @@ Edit => Preferences => Add-ons => Install => 點選下載的zip => 打開addon =
 
 ![Alt text](/imgs/vicAddons/blenderStair.gif)
 
-### Bridge Generator
-
 教學 https://docs.google.com/document/d/1PuDeD7YafzfP63JVKogzpvt-D57eoYOKeMlQ1LcdEAc/edit?usp=sharing
+
+### Bridge Generator
 
 程序化拱橋
 
