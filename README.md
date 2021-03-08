@@ -28,6 +28,8 @@ Edit => Preferences => Add-ons => Install => 點選下載的zip => 打開addon =
 
 ![Alt text](/imgs/vicAddons/blenderBridge.gif)
 
+教學 https://docs.google.com/document/d/1AVF1ZvqPcBSMp24uOjV5Z_kAnSumQ_7lGG4k5X-m1UA/edit?usp=sharing
+
 ### Lantern Generator
 
 程序化燈籠
